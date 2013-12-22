@@ -46,6 +46,8 @@ options = Options()
 
 options.add("verbose", short="v", help="Print more detailed status messages to stdout")
 options.add("quiet", short="q", help="Don't print status messages to stdout")
+
+options.add("regenerate", short="r", help="Wait for file changes in content directory and rebuild website")
 #options.add("log", accept=str, help="Write debug messages to given logfile")
 
 #options.add("file", accept=str, value="jasyscript.py", help="Use the given jasy script")
@@ -54,6 +56,7 @@ options.add("stats", help="Show statistics after run")
 
 options.add("version", short="V", help="Print version info only")
 options.add("help", short="h", help="Shows available options")
+
 
 try:
 	options.parse(args)
@@ -94,7 +97,24 @@ def main():
 
 	try:
 		if options.help:
-			print("Help")
+			print("\n%s" % Console.colorize(Console.colorize("Usage", "bold"), "underline"))
+			print("  $ %s [<options ...>] [create [--name <project name>]]\n\n" % os.path.basename(sys.argv[0]))
+
+			print(Console.colorize("Global options", "underline"))
+			options.printOptions(indent=21)
+
+			print("\n\n%s" % Console.colorize("Create new website project", "underline"))
+			print("  $ %s create --name <project name>\n" % os.path.basename(sys.argv[0]))
+			print("  --name <project name>:   %s" % Console.colorize("Set name of new website project", "magenta"))
+
+			print("\n\n%s" % Console.colorize("Generate website", "underline"))
+			print("  $ %s [--regenerate]\n" % os.path.basename(sys.argv[0]))
+			print("  --regenerate %s:       %s" % (
+				Console.colorize("[-r]", "grey"),
+				Console.colorize("Wait for file changes in content directory and rebuild website", "magenta")
+			))
+
+			print("\n\n")
 			sys.exit(0)
 
 			
@@ -105,6 +125,7 @@ def main():
 
 		runTask = ["build"]
 		tasks = options.getTasks()
+
 		if tasks:
 			for task in tasks:
 				if task["task"] == "create":
@@ -115,7 +136,11 @@ def main():
 						runTask.append("--skeleton=%s" % "website")
 
 					for param, value in task["params"].items():
-						runTask.append("--%s=%s" % (param, value))
+						if not param == "regenerate":
+							runTask.append("--%s=%s" % (param, value))
+
+		if options.regenerate and runTask[0] == "build":
+			runTask.append("--regenerate=true")
 
 		command = command + runTask
 
@@ -126,8 +151,9 @@ def main():
 		sys.exit(1)
 
 	except KeyboardInterrupt:
-		Console.error("Jasy Stopped!")
-		sys.exit(2)
+		#Console.error("Jasy Stopped!")
+		#sys.exit(2)
+		sys.exit(0)
 
 
 
