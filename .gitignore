@@ -1,2 +1,4 @@
 .jasy
 __pycache__
+dist
+konstrukteur.egg-info
