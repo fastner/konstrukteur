@@ -106,7 +106,7 @@ setup(
 		("konstrukteur", [
 #			"changelog.md",
 			"LICENSE.md",
-#			"readme.md",
+			"README.md",
 #			"requirements.txt"
 		 ]
 		)
