@@ -93,30 +93,33 @@ def init():
 	pass
 
 
+def displayHelp():
+	print("\n%s" % Console.colorize(Console.colorize("Usage", "bold"), "underline"))
+	print("  $ %s [<options ...>] [create [--name <project name>]]\n\n" % os.path.basename(sys.argv[0]))
+
+	print(Console.colorize("Global options", "underline"))
+	options.printOptions(indent=21)
+
+	print("\n\n%s" % Console.colorize("Create new website project", "underline"))
+	print("  $ %s create --name <project name>\n" % os.path.basename(sys.argv[0]))
+	print("  --name <project name>:   %s" % Console.colorize("Set name of new website project", "magenta"))
+
+	print("\n\n%s" % Console.colorize("Generate website", "underline"))
+	print("  $ %s [--regenerate]\n" % os.path.basename(sys.argv[0]))
+	print("  --regenerate %s:       %s" % (
+		Console.colorize("[-r]", "grey"),
+		Console.colorize("Wait for file changes in content directory and rebuild website", "magenta")
+	))
+
+	print("\n\n")
+
+
 def main():
 
 	try:
 		if options.help:
-			print("\n%s" % Console.colorize(Console.colorize("Usage", "bold"), "underline"))
-			print("  $ %s [<options ...>] [create [--name <project name>]]\n\n" % os.path.basename(sys.argv[0]))
-
-			print(Console.colorize("Global options", "underline"))
-			options.printOptions(indent=21)
-
-			print("\n\n%s" % Console.colorize("Create new website project", "underline"))
-			print("  $ %s create --name <project name>\n" % os.path.basename(sys.argv[0]))
-			print("  --name <project name>:   %s" % Console.colorize("Set name of new website project", "magenta"))
-
-			print("\n\n%s" % Console.colorize("Generate website", "underline"))
-			print("  $ %s [--regenerate]\n" % os.path.basename(sys.argv[0]))
-			print("  --regenerate %s:       %s" % (
-				Console.colorize("[-r]", "grey"),
-				Console.colorize("Wait for file changes in content directory and rebuild website", "magenta")
-			))
-
-			print("\n\n")
+			displayHelp()
 			sys.exit(0)
-
 			
 		command = ["jasy"]
 		for option in ["verbose", "quiet", "fast", "stats"]:
@@ -144,7 +147,12 @@ def main():
 
 		command = command + runTask
 
-		return jasy.core.Util.executeCommand(command, wrapOutput = False)
+		retVal = jasy.core.Util.executeCommand(command, wrapOutput = False)
+		
+		if retVal == 1:
+			displayHelp()
+
+		return retVal
 
 	except UserError as errobj:
 		Console.error("%s" % errobj)
