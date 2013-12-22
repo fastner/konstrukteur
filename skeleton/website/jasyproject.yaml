@@ -1,0 +1,15 @@
+name: $${name}
+requires:
+- source: https://github.com/fastner/konstrukteur.git
+konstrukteur:
+  site:
+    name: $${name} - A Konstrukteur skeleton website
+    url: //localhost:8000
+
+  articleurl: "{{current.lang}}/blog/{{current.slug}}"
+  pageurl: "{{current.lang}}/{{current.slug}}"
+  extensions:
+    - md
+    - html
+
+  theme: default

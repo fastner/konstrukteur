@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<html lang="{{current.lang}}">
+	<head>
+		<title>{{current.title}} - {{config.site.name}}</title>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+		<link rel="stylesheet" href="{{current.baseUrl}}/main.css">
+	</head>
+
+	<body>
+		<navigation>
+			{{>mainmenu}}
+		</navigation>
+
+		{{=content}}
+		
+		<footer >
+			{{>footer}}
+		</footer>
+	</body>
+</html>
