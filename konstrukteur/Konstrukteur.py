@@ -8,7 +8,7 @@
 # Little helper to allow python modules in libs path
 import sys, os.path, inspect
 filename = inspect.getframeinfo(inspect.currentframe()).filename
-path = os.path.join(os.path.dirname(os.path.abspath(filename)), "..", "libs", "watchdog", "src")
+path = os.path.join(os.path.dirname(os.path.abspath(filename)), "..", "konstrukteurlibs", "watchdog", "src")
 sys.path.insert(0,path)
 
 

@@ -99,7 +99,10 @@ setup(
 	],
 
 	packages = [
-		'konstrukteur',
+		"konstrukteur",
+		"konstrukteurlibs/watchdog/src/watchdog",
+		"konstrukteurlibs/watchdog/src/watchdog/utils",
+		"konstrukteurlibs/watchdog/src/watchdog/observers",
 	],
 
 	data_files = [

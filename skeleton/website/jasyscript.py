@@ -1,6 +1,7 @@
+import konstrukteur.Konstrukteur
 
 @task
 def build(regenerate = False):
 	"""Generate source (development) version"""
 
-	konstrukteur.build(regenerate)
+	konstrukteur.Konstrukteur.build(regenerate)
