@@ -10,7 +10,7 @@ import sys, os.path, inspect
 filename = inspect.getframeinfo(inspect.currentframe()).filename
 path = os.path.join(os.path.dirname(os.path.abspath(filename)), "..", "libs", "watchdog", "src")
 sys.path.insert(0,path)
-print(sys.path)
+
 
 __all__ = ["build"]
 
