@@ -104,11 +104,9 @@ setup(
 
 	data_files = [
 		("konstrukteur", [
-#			"changelog.md",
-			"LICENSE.md",
-			"README.md",
-#			"requirements.txt"
-		 ]
+				"LICENSE.md",
+				"README.md"
+			]
 		)
 	],
 

@@ -1,0 +1,9 @@
+recursive-include bin *
+recursive-include konstrukteur *.py
+recursive-include konstrukteur/data *
+recursive-include util *.md
+recursive-include util *.py
+recursive-include util *.sh
+
+include LICENSE.md
+include README.md
