@@ -33,7 +33,12 @@ if uses == "distribute":
 		"install_requires" : [ 
 			"jasy==1.5-beta1",
 			"pystache>=0.5.3", 
-			"beautifulsoup4>=4.3.2"
+			"beautifulsoup4>=4.3.2",
+
+			# Requirements of watchdog lib
+			"pathtools>=0.1.1",
+			"PyYAML>=3.09",
+			"argh>=0.8.1"
 		],
 
 #		"extras_require" : {
