@@ -56,7 +56,7 @@ extra["scripts"] = [ "bin/konstrukteur" ]
 if sys.platform == "win32":
 	extra["scripts"] += [ "bin/konstrukteur.bat" ]
 
-# Import Jasy for version info etc.
+# Import konstrukteur for version info etc.
 import konstrukteur
 
 # Run setup
@@ -71,7 +71,7 @@ setup(
 	maintainer_email = 'team@sebastian-software.de',
 
 	url = 'http://github.com/fastner/konstrukteur',
-	download_url = "http://pypi.python.org/packages/source/k/konstrukteur/jasy-%s.zip" % konstrukteur.__version__,
+	download_url = "http://pypi.python.org/packages/source/k/konstrukteur/konstrukteur-%s.zip" % konstrukteur.__version__,
 
 	license = "MIT",
 	platforms = 'any',
