@@ -9,11 +9,11 @@ export PATH="`pwd`:$PATH";
 cd .. || exit 1
 
 echo
-echo ">>> EXECUTING JASY VERSION..."
+echo ">>> EXECUTING KONSTRUKTEUR VERSION..."
 konstrukteur --version || exit 1
 
 echo
-echo ">>> RUNNING JASY CREATE"
+echo ">>> RUNNING KONSTRUKTEUR CREATE"
 konstrukteur create --name mytest || exit 1
 
 echo

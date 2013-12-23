@@ -1,0 +1,6 @@
+jasy==1.5-beta1
+pystache>=0.5.3
+beautifulsoup4>=4.3.2
+pathtools>=0.1.1
+PyYAML>=3.09
+argh>=0.8.1
