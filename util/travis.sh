@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PYTHONPATH=`pwd`
+
 echo ">>> PREPARING ENVIRONMENT..."
 cd bin || exit 1
 if ! [ `which python3` ]; then
