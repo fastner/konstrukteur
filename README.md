@@ -1,6 +1,8 @@
 # Konstrukteur
 *A static website generator*
 
+Based upon the magic **[Jasy][2]** - A powerful Python3 based Web Tooling Framework.
+
 ## Getting started
 
 ### Setup
@@ -45,3 +47,4 @@ to jasyscript.py. Take a look at [Jasy buildscript documentation][1].
 
 
 [1]: https://github.com/sebastian-software/jasy/wiki/Build-Script
+[2]: https://github.com/sebastian-software/jasy
