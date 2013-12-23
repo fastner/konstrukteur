@@ -3,6 +3,8 @@
 
 Based upon the magic **[Jasy][2]** - A powerful Python3 based Web Tooling Framework.
 
+[![Build Status](https://travis-ci.org/fastner/konstrukteur.png?branch=master)](https://travis-ci.org/fastner/konstrukteur)
+
 ## Getting started
 
 ### Setup
