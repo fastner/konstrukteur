@@ -41,7 +41,9 @@ and german. Build your web site into build directory
 
 The generated web site is now located at *~/mynewweb/build*. You can copy 
 this directory to your web server. A better way is to add your deployment process 
-to jasyscript.py. Take a look at [Jasy buildscript documentation][1].
+to jasyscript.py. 
+
+Take a look at [Jasy buildscript documentation][1].
 
 
 
