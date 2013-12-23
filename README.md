@@ -29,12 +29,19 @@ Konstrukteur now has created a new website project called *mynewweb*.
 
 ### Build website
 
-The default skeleton includes a very simple theme and a web page in english and german.
-Build your web site into output directory
+The default skeleton includes a very simple theme and a web page in english 
+and german. Build your web site into build directory
 
     (webdev):~$ cd mynewweb
     (webdev):~/mynewweb$ konstrukteur
 
 ### Result
 
-The generated web site is now located at *~/mynewweb/output*. You can copy this directory to your web server.
+The generated web site is now located at *~/mynewweb/build*. You can copy 
+this directory to your web server. A better way is to add your deployment process 
+to jasyscript.py. Take a look at [Jasy buildscript documentation][1].
+
+
+
+
+[1]: https://github.com/sebastian-software/jasy/wiki/Build-Script

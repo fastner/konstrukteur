@@ -219,7 +219,7 @@ class Konstrukteur:
 		""" Copy static files to output directory """
 		staticTemplatePath = os.path.join(self.__themePath, "static")
 		staticContentPath = self.__staticPath
-		destinationPath = os.path.join(self.mainPath, "output");
+		destinationPath ="{{prefix}}"
 
 		Console.info("Copy static content")
 		Console.indent()
@@ -325,7 +325,7 @@ class Konstrukteur:
 			}
 
 			processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(self.__pageUrl, renderModel)
-			outputFilename = os.path.join(self.mainPath, "output", processedFilename)
+			outputFilename = session.expandFileName(os.path.join("{{prefix}}", processedFilename))
 			Console.info("Writing %s" % outputFilename)
 
 			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates["page"], renderModel)
