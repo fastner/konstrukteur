@@ -1,4 +1,4 @@
--e git+https://fastner@github.com/sebastian-software/jasy.git#egg=jasy-origin/HEAD
+-e git+https://fastner@github.com/sebastian-software/jasy.git#egg=jasy
 pystache>=0.5.3
 beautifulsoup4>=4.3.2
 pathtools>=0.1.1
