@@ -1,4 +1,4 @@
-jasy==1.5-beta2
+-e git+https://fastner@github.com/sebastian-software/jasy.git#egg=jasy-origin/HEAD
 pystache>=0.5.3
 beautifulsoup4>=4.3.2
 pathtools>=0.1.1
