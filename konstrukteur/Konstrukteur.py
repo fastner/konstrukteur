@@ -15,6 +15,7 @@ sys.path.insert(0,path)
 __all__ = ["build"]
 
 from jasy.env.State import session
+from jasy.env.State import profile
 from jasy.core import Console
 import konstrukteur.FileManager
 import pystache
@@ -30,6 +31,8 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
+COMMAND_REGEX = re.compile(r"{{@(?P<cmd>\S+?)(?:\s(\S+?))*}}")
+
 def build(regenerate):
 	""" Build static website """
 
@@ -44,8 +47,7 @@ def build(regenerate):
 	app.articleurl = session.getMain().getConfigValue("konstrukteur.articleurl", "{{current.lang}}/blog/{{current.slug}}")
 	app.pageurl = session.getMain().getConfigValue("konstrukteur.pageurl", "{{current.lang}}/{{current.slug}}")
 	app.extensions = session.getMain().getConfigValue("konstrukteur.extensions", ["md", "html"])
-	app.theme = session.getMain().getConfigValue("konstrukteur.theme", "testtheme")
-	app.mainPath = session.getMain().getPath()
+	app.theme = session.getMain().getConfigValue("konstrukteur.theme", None)
 
 	app.regenerate = not regenerate == False
 
@@ -63,7 +65,6 @@ class Konstrukteur:
 	pageurl = None
 	extensions = None
 	theme = None
-	mainPath = None
 	regenerate = None
 
 	__templates = None
@@ -84,6 +85,9 @@ class Konstrukteur:
 
 		self.__fileManager = konstrukteur.FileManager.FileManager(session)
 		self.__locale = {}
+		self.__commandReplacer = []
+		self.__id = 0
+		self.__templates = {}
 
 
 	def build(self):
@@ -91,16 +95,18 @@ class Konstrukteur:
 		Console.header("Konstrukteur - static website generator")
 		Console.indent()
 
-		self.__themePath = os.path.join(self.mainPath, "theme", self.theme)
-		self.__staticPath = os.path.join(self.mainPath, "static");
-		self.__contentPath = os.path.join(self.mainPath, "content")
+		self.__templatePath = os.path.join(session.getMain().getPath(), "source", "template") #, self.theme)
+		self.__contentPath = os.path.join(session.getMain().getPath(), "source", "content")
 		
-		if not os.path.exists(self.__themePath):
-			raise RuntimeError("Path to theme not found : %s" % self.__themePath)
-		if not os.path.exists(self.__staticPath):
-			raise RuntimeError("Path to static files not found : %s" % self.__staticPath)
+		if not os.path.exists(self.__templatePath):
+			raise RuntimeError("Path to theme not found : %s" % self.__templatePath)
 		if not os.path.exists(self.__contentPath):
 			raise RuntimeError("Path to content not found : %s" % self.__contentPath)
+
+		if self.theme:
+			theme = session.getProjectByName(self.theme)
+			if not theme:
+				raise RuntimeError("Theme '%s' not found" % self.theme)
 
 		self.__articleUrl = pystache.parse(self.articleurl)
 		self.__pageUrl = pystache.parse(self.pageurl)
@@ -130,7 +136,6 @@ class Konstrukteur:
 	def __build(self):
 		""" Build static website """
 		self.__parseContent()
-		self.__copyStaticFiles()
 		self.__outputContent()
 
 		Console.info("Done processing website")
@@ -148,25 +153,56 @@ class Konstrukteur:
 		return content
 
 
+	def __fixJasyCommands(self, content):
+		def commandReplacer(command):
+			cmd = command.group("cmd")
+			params = []
+			for i in range(2, command.lastindex+1):
+				params.append(command.group(i))
+		
+			id = "jasy_command_%s" % self.__id
+			self.__id += 1
+
+			self.__commandReplacer.append((id, cmd, params))
+		
+			return "{{%s}}" % id
+
+
+		return re.sub(COMMAND_REGEX, commandReplacer, content)
+
+
 	def __parseTemplate(self):
 		""" Parse all templates in theme's template directory """
-		self.__templates = {}
 
-		templatePath = os.path.join(self.__themePath, "template")
-		Console.info("Parse templates at %s" % templatePath)
+		mainProject = session.getMain()
+
+		for project in session.getProjects():
+			projectId = project.getName()
+
+			templatePath = os.path.join(project.getPath(), "source", "template")
+
+			Console.info("Parse templates at %s" % templatePath)
+			Console.indent()
+
+			for filename in glob.iglob(os.path.join(templatePath, "*.html")):
+				basename = os.path.basename(filename)
+				name = basename[:basename.rindex(".")]
+				Console.debug("Parsing %s as %s" % (basename, name))
+
+				template = self.__fixCoreTemplating(self.__fixJasyCommands(open(filename, "rt").read()))
+
+				if mainProject == project:
+					self.__templates[name] = template
+					
+				self.__templates["%s.%s" % (projectId, name)] = template
+
+
+			self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
+
+			Console.outdent()
+
 		Console.indent()
-
-		for filename in glob.iglob(os.path.join(templatePath, "*.html")):
-			basename = os.path.basename(filename)
-			name = basename[:basename.rindex(".")]
-			Console.debug("Parsing %s as %s" % (basename, name))
-
-			self.__templates[name] = self.__fixCoreTemplating(open(filename, "rt").read())
-
-		self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
-
 		Console.info("Found and parsed %d templates" % len(self.__templates))
-
 		Console.outdent()
 
 
@@ -187,7 +223,7 @@ class Konstrukteur:
 				page = self.__parseContentFile(filename, extension)
 
 				if page:
-					page["content"] = self.__fixCoreTemplating(page["content"])
+					page["content"] = self.__fixCoreTemplating(self.__fixJasyCommands(page["content"]))
 
 					if not "status" in page:
 						page["status"] = "published"
@@ -215,27 +251,6 @@ class Konstrukteur:
 		return self.__extensionParser[extension].parse(filename)
 
 
-	def __copyStaticFiles(self):
-		""" Copy static files to output directory """
-		staticTemplatePath = os.path.join(self.__themePath, "static")
-		staticContentPath = self.__staticPath
-		destinationPath ="{{prefix}}"
-
-		Console.info("Copy static content")
-		Console.indent()
-
-		self.__fileManager.removeDir(destinationPath)
-
-		Console.info("Copy from template at path %s" % staticTemplatePath)
-		self.__fileManager.copyDir(staticTemplatePath, destinationPath)
-
-		Console.info("Copy from content at path %s" % staticContentPath)
-		self.__fileManager.copyDir(staticContentPath, destinationPath)
-
-		Console.outdent()
-
-
-
 	def __mapLanguages(self, languages, currentPage):
 		""" Annotate languges list with information about current language """
 
@@ -243,6 +258,9 @@ class Konstrukteur:
 			currentLanguage = value == currentPage["lang"]
 			currentName = self.__locale[value].getName(value)
 			
+			if "translations" not in currentPage:
+				return None
+
 			if currentLanguage:
 				translatedName = currentName
 				relativeUrl = "."
@@ -304,6 +322,18 @@ class Konstrukteur:
 
 
 
+	def __jasyCommandsHandling(self, renderModel, filename):
+		oldWorkingPath = profile.getWorkingPath()
+		profile.setWorkingPath(os.path.dirname(filename))
+
+		for id, cmd, params in self.__commandReplacer:
+			result, type = session.executeCommand(cmd, params)
+			renderModel[id] = result
+
+		profile.setWorkingPath(oldWorkingPath)
+
+
+
 	def __outputContent(self):
 		""" Output processed content to html files """
 
@@ -328,8 +358,17 @@ class Konstrukteur:
 			outputFilename = session.expandFileName(os.path.join("{{prefix}}", processedFilename))
 			Console.info("Writing %s" % outputFilename)
 
-			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates["page"], renderModel)
-			content = self.__renderer.render(self.__templates["layout"], renderModel)
+			self.__jasyCommandsHandling(renderModel, outputFilename)
+
+			if self.theme:
+				pageName = "%s.page" % self.theme
+				layoutName = "%s.layout" % self.theme
+			else:
+				pageName = "page"
+				layoutName = "layout"
+
+			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[pageName], renderModel)
+			content = self.__renderer.render(self.__templates[layoutName], renderModel)
 			self.__fileManager.writeFile(outputFilename, content)
 
 		Console.outdent()
