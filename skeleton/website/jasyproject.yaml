@@ -10,4 +10,4 @@ konstrukteur:
     - md
     - html
 
-  theme: default
+  theme: $${name}
