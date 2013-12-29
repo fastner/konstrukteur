@@ -1,5 +1,5 @@
 import konstrukteur.Konstrukteur
-import jasy.asset.Manager2 as AssetManager
+import jasy.asset.Manager as AssetManager
 
 @task
 def build(regenerate = False):
