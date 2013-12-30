@@ -1,4 +1,5 @@
 name: $${name}
+require: https://github.com/fastner/konstrukteur.git
 konstrukteur:
   site:
     name: $${name} - A Konstrukteur skeleton website
