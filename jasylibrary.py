@@ -21,8 +21,10 @@ def build(profile, regenerate = False):
 		folder = ""
 		if type == "css":
 			folder = profile.getCssFolder()
-		outputPath = folder #os.path.join(profile.getDestinationPath(), folder)
+		#outputPath = folder
+		outputPath = os.path.relpath("%s/%s" % (profile.getDestinationPath(), folder), profile.getWorkingPath())
 		filename = profile.expandFileName("%s/%s-{{id}}.%s" % (outputPath, part, type))
+
 		return filename
 
 	profile.addCommand("part.url", getPartUrl, "url")
