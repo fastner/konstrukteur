@@ -15,9 +15,8 @@ sys.path.insert(0,path)
 __all__ = ["build"]
 
 from jasy.env.State import session
-from jasy.env.State import profile
 from jasy.core import Console
-import konstrukteur.FileManager
+from jasy.core import FileManager
 import pystache
 import os.path
 import glob
@@ -31,9 +30,9 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
-COMMAND_REGEX = re.compile(r"{{@(?P<cmd>\S+?)(?:\s(\S+?))*}}")
+COMMAND_REGEX = re.compile(r"{{@(?P<cmd>\S+?)(?:\s+?(?P<params>.+?))}}")
 
-def build(regenerate):
+def build(regenerate, profile):
 	""" Build static website """
 
 	if regenerate:
@@ -51,7 +50,7 @@ def build(regenerate):
 
 	app.regenerate = not regenerate == False
 
-	app.build()
+	app.build(profile)
 
 	if regenerate:
 		session.resume()
@@ -83,20 +82,23 @@ class Konstrukteur:
 		self.__extensionParser = {}
 		self.__extensionParser["html"] = konstrukteur.HtmlParser
 
-		self.__fileManager = konstrukteur.FileManager.FileManager(session)
 		self.__locale = {}
 		self.__commandReplacer = []
 		self.__id = 0
 		self.__templates = {}
 
 
-	def build(self):
+	def build(self, profile):
 		""" Build static website """
 		Console.header("Konstrukteur - static website generator")
 		Console.indent()
 
 		self.__templatePath = os.path.join(session.getMain().getPath(), "source", "template") #, self.theme)
 		self.__contentPath = os.path.join(session.getMain().getPath(), "source", "content")
+		self.__sourcePath = os.path.join(session.getMain().getPath(), "source")
+
+		self.__profile = profile
+		self.__fileManager = FileManager.FileManager(profile)
 		
 		if not os.path.exists(self.__templatePath):
 			raise RuntimeError("Path to theme not found : %s" % self.__templatePath)
@@ -117,7 +119,7 @@ class Konstrukteur:
 		if self.regenerate:
 			fileChangeEventHandler = konstrukteur.FileWatcher.FileChangeEventHandler()
 			observer = Observer()
-			observer.schedule(fileChangeEventHandler, self.__contentPath, recursive=True)
+			observer.schedule(fileChangeEventHandler, self.__sourcePath, recursive=True)
 			observer.start()
 			try:
 				Console.info("Waiting for file changes (abort with CTRL-C)")
@@ -156,13 +158,10 @@ class Konstrukteur:
 	def __fixJasyCommands(self, content):
 		def commandReplacer(command):
 			cmd = command.group("cmd")
-			params = []
-			for i in range(2, command.lastindex+1):
-				params.append(command.group(i))
-		
+			params = command.group("params").split()
 			id = "jasy_command_%s" % self.__id
+			
 			self.__id += 1
-
 			self.__commandReplacer.append((id, cmd, params))
 		
 			return "{{%s}}" % id
@@ -223,7 +222,10 @@ class Konstrukteur:
 				page = self.__parseContentFile(filename, extension)
 
 				if page:
-					page["content"] = self.__fixCoreTemplating(self.__fixJasyCommands(page["content"]))
+					for key, value in page.items():
+						page[key] = self.__fixJasyCommands(value)
+
+					page["content"] = self.__fixCoreTemplating(page["content"])
 
 					if not "status" in page:
 						page["status"] = "published"
@@ -323,14 +325,14 @@ class Konstrukteur:
 
 
 	def __jasyCommandsHandling(self, renderModel, filename):
-		oldWorkingPath = profile.getWorkingPath()
-		profile.setWorkingPath(os.path.dirname(filename))
+		oldWorkingPath = self.__profile.getWorkingPath()
+		self.__profile.setWorkingPath(os.path.dirname(filename))
 
 		for id, cmd, params in self.__commandReplacer:
-			result, type = session.executeCommand(cmd, params)
+			result, type = self.__profile.executeCommand(cmd, params)
 			renderModel[id] = result
 
-		profile.setWorkingPath(oldWorkingPath)
+		self.__profile.setWorkingPath(oldWorkingPath)
 
 
 
@@ -355,7 +357,7 @@ class Konstrukteur:
 			}
 
 			processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(self.__pageUrl, renderModel)
-			outputFilename = session.expandFileName(os.path.join("{{prefix}}", processedFilename))
+			outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
 			Console.info("Writing %s" % outputFilename)
 
 			self.__jasyCommandsHandling(renderModel, outputFilename)
@@ -367,8 +369,9 @@ class Konstrukteur:
 				pageName = "page"
 				layoutName = "layout"
 
+			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(renderModel["content"], renderModel)
 			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[pageName], renderModel)
-			content = self.__renderer.render(self.__templates[layoutName], renderModel)
-			self.__fileManager.writeFile(outputFilename, content)
+			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[layoutName], renderModel)
+			self.__fileManager.writeFile(outputFilename, self.__renderer.render(renderModel["content"], renderModel))
 
 		Console.outdent()
