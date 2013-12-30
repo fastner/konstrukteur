@@ -10,9 +10,22 @@ path = os.path.dirname(os.path.abspath(filename))
 sys.path.append(path)
 
 import konstrukteur.Konstrukteur
+import jasy.asset.Manager
+
 
 @share
-def build(regenerate = False):
+def build(profile, regenerate = False):
 	""" Build static website """
 	
-	konstrukteur.Konstrukteur.build(regenerate)
+	def getPartUrl(part, type):
+		folder = ""
+		if type == "css":
+			folder = profile.getCssFolder()
+		outputPath = folder #os.path.join(profile.getDestinationPath(), folder)
+		filename = profile.expandFileName("%s/%s-{{id}}.%s" % (outputPath, part, type))
+		return filename
+
+	session.addCommand("part.url", getPartUrl, "url")
+
+	for permutation in profile.permutate():
+		konstrukteur.Konstrukteur.build(regenerate, profile)
