@@ -25,7 +25,7 @@ def build(profile, regenerate = False):
 		filename = profile.expandFileName("%s/%s-{{id}}.%s" % (outputPath, part, type))
 		return filename
 
-	session.addCommand("part.url", getPartUrl, "url")
+	profile.addCommand("part.url", getPartUrl, "url")
 
 	for permutation in profile.permutate():
 		konstrukteur.Konstrukteur.build(regenerate, profile)
