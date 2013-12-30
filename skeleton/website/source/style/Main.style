@@ -1,0 +1,6 @@
+
+$default_color = #f90;
+
+body {
+	background-color: $default_color;
+}

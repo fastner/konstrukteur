@@ -1,15 +1,14 @@
-import konstrukteur.Konstrukteur
-import jasy.asset.Manager as AssetManager
+from jasy.core.Profile import Profile
 
 @task
 def build(regenerate = False):
 	"""Generate source (development) version"""
 
-	# Initialize assets
-	assetManager = AssetManager.AssetManager(profile, session)
+	profile = Profile(session)
+	profile.registerPart("$${name}", styleName="$${name}.Main")
+	profile.setHashAssets(True)
+	profile.setCopyAssets(True)
 
-	# Build static website
-	konstrukteur.Konstrukteur.build(regenerate)
+	konstrukteur.build(profile, regenerate)
 
-	# Copy assets to build path
-	assetManager.copyAssets()
+	BuildTool.run(profile)
