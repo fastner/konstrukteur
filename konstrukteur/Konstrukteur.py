@@ -193,8 +193,7 @@ class Konstrukteur:
 				if mainProject == project:
 					self.__templates[name] = template
 					
-				self.__templates["%s.%s" % (projectId, name)] = template
-
+				self.__templates["%s.%s" % (projectId, name[0].upper()+name[1:])] = template
 
 			self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
 
