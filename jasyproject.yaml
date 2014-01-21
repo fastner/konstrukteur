@@ -1,1 +1,3 @@
 name: konstrukteur
+requires:
+- https://github.com/fastner/jasy-template.git
