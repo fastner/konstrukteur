@@ -15,7 +15,12 @@ def build(profile, regenerate = False):
 	def getPartUrl(part, type):
 		folder = ""
 		if type == "css":
-			folder = profile.getCssFolder()
+			if hasattr(profile, "getCssFolder"):
+				# Old jasy < 1.5-beta4
+				folder = profile.getCssFolder()
+			else:
+				# New jasy >= 1.5-beta4
+				folder = profile.getCssOutputFolder()
 		
 		outputPath = os.path.relpath(os.path.join(profile.getDestinationPath(), folder), profile.getWorkingPath())
 		filename = profile.expandFileName("%s/%s-{{id}}.%s" % (outputPath, part, type))
