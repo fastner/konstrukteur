@@ -38,7 +38,8 @@ if uses == "distribute":
 			# Requirements of watchdog lib
 			"pathtools>=0.1.1",
 			"PyYAML>=3.09",
-			"argh>=0.8.1"
+			"argh>=0.8.1",
+			"unidecode>=0.4.14"
 		],
 
 #		"extras_require" : {
