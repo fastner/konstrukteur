@@ -30,6 +30,8 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
+from unidecode import unidecode
+
 COMMAND_REGEX = re.compile(r"{{@(?P<cmd>\S+?)(?:\s+?(?P<params>.+?))}}")
 
 def build(regenerate, profile):
@@ -204,6 +206,10 @@ class Konstrukteur:
 		Console.outdent()
 
 
+	def __fixSlug(self, slug):
+		return unidecode(slug).lower().replace(" ", "-")
+
+
 	def __parseContent(self):
 		""" Parse all content files in users content directory """
 		self.__pages = []
@@ -223,6 +229,11 @@ class Konstrukteur:
 				if page:
 					for key, value in page.items():
 						page[key] = self.__fixJasyCommands(value)
+
+					if "slug" in page:
+						page["slug"] = self.__fixSlug(page["slug"])
+					else:
+						page["slug"] = self.__fixSlug(page["title"])
 
 					page["content"] = self.__fixCoreTemplating(page["content"])
 
