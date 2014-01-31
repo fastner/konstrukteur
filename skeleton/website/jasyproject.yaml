@@ -1,15 +1,37 @@
 name: $${name}
+
 requires: 
 - source: https://github.com/fastner/konstrukteur.git
+
+scan:
+  "source/class/*.js": jasy.Class
+  "source/style/*.style": jasy.Style
+  "source/translation/*.{po,xlf,properties,txt}": jasy.Translation
+  "source/asset/*": jasy.Asset
+  "source/template/*.{html,tmpl}":
+    type: template.Template
+
 konstrukteur:
   site:
     name: $${name} - A Konstrukteur skeleton website
     url: //localhost:8000
 
-  articleurl: "{{current.lang}}/blog/{{current.slug}}"
+  blog:
+    defaultAuthor: Sebastian Fastner
+    itemsInFeed: 20
+    itemsInIndex: 10
+    articleurl: "{{current.lang}}/blog/{{current.slug}}"
+    feedurl: "feed.{{current.lang}}.xml"
+    indexurl: "{{current.lang}}/blog/index-{{current.pageno}}"
+    indexTitle:
+      de: "Blog-Index {{current.pageno}}"
+      en: "blog index {{current.pageno}}"
+
   pageurl: "{{current.lang}}/{{current.slug}}"
   extensions:
     - md
     - html
+
+  defaultLanguage: en
 
   #theme: $${name}
