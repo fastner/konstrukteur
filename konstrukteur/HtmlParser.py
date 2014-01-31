@@ -24,6 +24,9 @@ def parse(filename):
 	page["summary"] = body.p.get_text()
 
 	for meta in parsedContent.find_all("meta"):
-		page[meta["name"].lower()] = meta["contents"]
+		if not hasattr(meta, "name") or not hasattr(meta, "content"):
+			raise RuntimeError("Meta elements must have attributes name and content : %s" % filename)
+
+		page[meta["name"].lower()] = meta["content"]
 
 	return page
