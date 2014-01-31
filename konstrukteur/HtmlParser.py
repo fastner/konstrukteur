@@ -15,8 +15,13 @@ def parse(filename):
 	page = {}
 
 	parsedContent = BeautifulSoup(open(filename, "rt").read())
-	page["content"] = "".join([str(tag) for tag in parsedContent.find("body").contents]) 
+
+	body = parsedContent.find("body")
+
+	page["content"] = "".join([str(tag) for tag in body.contents])
 	page["title"] = parsedContent.title.string
+
+	page["summary"] = body.p.get_text()
 
 	for meta in parsedContent.find_all("meta"):
 		page[meta["name"].lower()] = meta["contents"]
