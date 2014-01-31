@@ -10,7 +10,7 @@ Konstrukteur is a website generator that uses a template and content files
 to create static website output.
 """
 
-__version__ = "0.1.11"
+__version__ = "0.1.12"
 __author__ = "Sebastian Fastner <mail@sebastianfastner.de>"
 
 def info():

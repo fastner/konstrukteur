@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+	<title>{{site.name}}</title>
+	<id>http:{{site.url}}</id>
+	<updated>{{now}}</updated>
+
+	<link rel="self" href="http:{{site.url}}/{{feedurl}}"/>
+ 
+ 	{{#article}}
+ 		{{?publish}}
+			<entry>
+				<author><name>{{config.blog.defaultAuthor}}</name></author>
+				<id>http:{{absoluteUrl}}</id>
+				<title>{{title}}</title>
+				<updated>{{date}}</updated>
+
+				<link href="http:{{absoluteUrl}}"/>
+				<summary>{{summary}}</summary>
+			</entry>
+		{{/publish}}
+	{{/article}}
+</feed>

@@ -25,10 +25,21 @@ import operator
 import konstrukteur.HtmlParser
 import konstrukteur.Language
 import konstrukteur.FileWatcher
+import konstrukteur.ContentParser
+import konstrukteur.Util
 
+import dateutil.parser
+import dateutil.tz
+
+import datetime
 import time
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
+import itertools
+
+from unidecode import unidecode
+
+from bs4 import BeautifulSoup
 
 COMMAND_REGEX = re.compile(r"{{@(?P<cmd>\S+?)(?:\s+?(?P<params>.+?))}}")
 
@@ -39,14 +50,16 @@ def build(regenerate, profile):
 		session.pause()
 
 	app = Konstrukteur()
-	config = session.getMain().getConfigValue("konstrukteur")
+	app.config = session.getMain().getConfigValue("konstrukteur")
 
 	app.sitename = session.getMain().getConfigValue("konstrukteur.site.name", "Test website")
 	app.siteurl = session.getMain().getConfigValue("konstrukteur.site.url", "//localhost")
-	app.articleurl = session.getMain().getConfigValue("konstrukteur.articleurl", "{{current.lang}}/blog/{{current.slug}}")
+	app.articleurl = session.getMain().getConfigValue("konstrukteur.blog.articleurl", "{{current.lang}}/blog/{{current.slug}}")
 	app.pageurl = session.getMain().getConfigValue("konstrukteur.pageurl", "{{current.lang}}/{{current.slug}}")
+	app.feedurl = session.getMain().getConfigValue("konstrukteur.blog.feedurl", "feed.{{current.lang}}.xml")
 	app.extensions = session.getMain().getConfigValue("konstrukteur.extensions", ["md", "html"])
-	app.theme = session.getMain().getConfigValue("konstrukteur.theme", None)
+	app.theme = session.getMain().getConfigValue("konstrukteur.theme", session.getMain().getName())
+	app.defaultLanguage = session.getMain().getConfigValue("konstrukteur.defaultLanguage", "en")
 
 	app.regenerate = not regenerate == False
 
@@ -62,16 +75,19 @@ class Konstrukteur:
 	siteurl = None
 	articleurl = None
 	pageurl = None
+	feedurl = None
 	extensions = None
 	theme = None
 	regenerate = None
+	defaultLanguage = None
+	config = None
 
 	__templates = None
 	__pages = None
 	__languages = None
-	__extensionParser = None
 	__articleUrl = None
 	__pageUrl = None
+	__feedUrl = None
 
 	__renderer = None
 	__safeRenderer = None
@@ -79,9 +95,6 @@ class Konstrukteur:
 	__locale = None
 
 	def __init__(self):
-		self.__extensionParser = {}
-		self.__extensionParser["html"] = konstrukteur.HtmlParser
-
 		self.__locale = {}
 		self.__commandReplacer = []
 		self.__id = 0
@@ -112,6 +125,7 @@ class Konstrukteur:
 
 		self.__articleUrl = pystache.parse(self.articleurl)
 		self.__pageUrl = pystache.parse(self.pageurl)
+		self.__feedUrl = pystache.parse(self.feedurl)
 
 		self.__parseTemplate()
 		self.__build()
@@ -143,18 +157,6 @@ class Konstrukteur:
 		Console.info("Done processing website")
 
 
-	def __fixCoreTemplating(self, content):
-		""" This fixes differences between core JS templating and standard mustache templating """
-
-		# Replace {{=tagname}} with {{&tagname}}
-		content = re.sub(r"{{=(?P<tag>.+?)}}", "{{&\g<tag>}}", content)
-
-		# Replace {{?tagname}} with {{#tagname}}
-		content = re.sub(r"{{\?(?P<tag>.+?)}}", "{{#\g<tag>}}", content)
-
-		return content
-
-
 	def __fixJasyCommands(self, content):
 		def commandReplacer(command):
 			cmd = command.group("cmd")
@@ -171,85 +173,38 @@ class Konstrukteur:
 
 
 	def __parseTemplate(self):
-		""" Parse all templates in theme's template directory """
-
-		mainProject = session.getMain()
+		""" Process all templates to support jasy commands """
 
 		for project in session.getProjects():
-			projectId = project.getName()
+			templates = project.getItems("template.Template")
+			if templates:
+				for template, content in templates.items():
+					self.__templates[template] = konstrukteur.Util.fixCoreTemplating(self.__fixJasyCommands(content.getText()))
 
-			templatePath = os.path.join(project.getPath(), "source", "template")
-
-			Console.info("Parse templates at %s" % templatePath)
-			Console.indent()
-
-			for filename in glob.iglob(os.path.join(templatePath, "*.html")):
-				basename = os.path.basename(filename)
-				name = basename[:basename.rindex(".")]
-				Console.debug("Parsing %s as %s" % (basename, name))
-
-				template = self.__fixCoreTemplating(self.__fixJasyCommands(open(filename, "rt").read()))
-
-				if mainProject == project:
-					self.__templates[name] = template
-					
-				self.__templates["%s.%s" % (projectId, name[0].upper()+name[1:])] = template
-
-			self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
-
-			Console.outdent()
-
-		Console.indent()
-		Console.info("Found and parsed %d templates" % len(self.__templates))
-		Console.outdent()
+		self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
+		self.__safeRenderer = pystache.Renderer(partials=self.__templates)
 
 
 	def __parseContent(self):
 		""" Parse all content files in users content directory """
+
+		contentParser = konstrukteur.ContentParser.ContentParser(self.extensions, self.__fixJasyCommands, self.defaultLanguage)
 		self.__pages = []
+		self.__article = []
 		self.__languages = []
 
-		pagesPath = os.path.join(self.__contentPath, "pages")
-		Console.info("Parse content files at %s" % pagesPath)
-		Console.indent()
+		contentParser.parse(os.path.join(self.__contentPath, "pages"), self.__pages, self.__languages)
+		contentParser.parse(os.path.join(self.__contentPath, "article"), self.__article, self.__languages)
 
-		for extension in self.extensions:
-			for filename in glob.iglob(os.path.join(pagesPath, "*.%s" % extension)):
-				basename = os.path.basename(filename)
-				Console.debug("Parsing %s" % basename)
+		for article in self.__article:
+			if not "date" in article:
+				raise RuntimeError("No date metadata in article : " + article["title"])
+			else:
+				article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())
 
-				page = self.__parseContentFile(filename, extension)
-
-				if page:
-					for key, value in page.items():
-						page[key] = self.__fixJasyCommands(value)
-
-					page["content"] = self.__fixCoreTemplating(page["content"])
-
-					if not "status" in page:
-						page["status"] = "published"
-					if not "pos" in page:
-						page["pos"] = 0
-					else:
-						page["pos"] = int(page["pos"])
-
-					self.__pages.append(page)
-
-					if page["lang"] not in self.__languages:
-						self.__locale[page["lang"]] = konstrukteur.Language.LocaleParser(page["lang"])
-						self.__languages.append(page["lang"])
-				else:
-					Console.error("Error parsing %s" % filename)
-
-		Console.outdent()
-
-
-	def __parseContentFile(self, filename, extension):
-		""" Parse single content file """
-		if not extension in self.__extensionParser:
-			raise RuntimeError("No content parser for extension %s registered" % extension)
-
-		return self.__extensionParser[extension].parse(filename)
+		for language in self.__languages:
+			if not language in self.__locale:
+				self.__locale[language] = konstrukteur.Language.LocaleParser(language)
 
 
 	def __mapLanguages(self, languages, currentPage):
@@ -283,10 +238,9 @@ class Konstrukteur:
 
 
 
-	def __refreshUrls(self, pages, currentPage):
+	def __refreshUrls(self, pages, currentPage, pageUrlTemplate):
 		""" Refresh urls of every page relative to current active page """
 		siteUrl = self.siteurl
-		pageUrlTemplate = self.__pageUrl
 
 		for page in pages:
 			url = page["url"] if "url" in page else self.__renderer.render(pageUrlTemplate, { "current" : page })
@@ -334,6 +288,51 @@ class Konstrukteur:
 		self.__profile.setWorkingPath(oldWorkingPath)
 
 
+	def __createPage(self, slug, title, content):
+		contentParser = konstrukteur.ContentParser.ContentParser(self.extensions, self.__fixJasyCommands, self.defaultLanguage)
+		return contentParser.generateFields({
+			"slug": slug,
+			"title": title,
+			"content": content
+		}, self.__languages)
+
+
+	def __generateArticleIndex(self):
+		indexPages = []
+		itemsInIndex = self.config["blog"]["itemsInIndex"]
+
+		if not type(self.config["blog"]["indexTitle"]) == dict:
+			indexTitleLang = {}
+			for language in self.__languages:
+				indexTitleLang[language] = self.config["blog"]["indexTitle"]
+			self.config["blog"]["indexTitle"] = indexTitleLang
+
+		for language in self.__languages:
+
+			indexTitle = self.config["blog"]["indexTitle"][language] if "indexTitle" in self.config["blog"] else "Index %d"
+			sortedArticles = sorted([article for article in self.__article if article["lang"] == language], key=self.__articleSorter)
+
+			pos = 0
+			page = 1
+			while pos < len(sortedArticles):
+				self.__renderer.render(indexTitle, {
+					"current" : {
+						"pageno" : page,
+						"lang" : language
+					}
+				})
+				indexPage = self.__createPage("index-%d" % page, indexTitle, "")
+				indexPages.append(indexPage)
+
+				indexPage["article"] = sortedArticles[pos:itemsInIndex+pos]
+				indexPage["pageno"] = page
+
+				pos += itemsInIndex
+				page += 1
+
+		return indexPages
+		
+
 
 	def __outputContent(self):
 		""" Output processed content to html files """
@@ -341,36 +340,113 @@ class Konstrukteur:
 		Console.info("Generate content files")
 		Console.indent()
 
-		for currentPage in self.__pages:
-			self.__refreshUrls(self.__pages, currentPage);
+		if self.__article:
+			for article in self.__article:
+				article["publish"] = article["status"] == "published"
+				article["date"] = article["date"].isoformat()
 
-			renderModel = {
-				'current' : currentPage,
-				'content' : currentPage["content"],
-				'pages' : self.__filterAndSortPages(self.__pages, currentPage),
-				'config' : {
-					'sitename' : self.sitename,
-					'siteurl' : self.siteurl
-				},
-				'languages' : self.__mapLanguages(self.__languages, currentPage)
-			}
-
-			processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(self.__pageUrl, renderModel)
-			outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
-			Console.info("Writing %s" % outputFilename)
-
-			self.__jasyCommandsHandling(renderModel, outputFilename)
-
-			if self.theme:
-				pageName = "%s.page" % self.theme
-				layoutName = "%s.layout" % self.theme
+		for type in ["article", "articleIndex", "page"]:
+			# Articles must be generated before articleIndex
+			if type == "articleIndex":
+				urlGenerator = self.config["blog"]["indexurl"]
+				pages = self.__generateArticleIndex()
+			elif type == "page":
+				urlGenerator = self.__pageUrl
+				pages = self.__pages
 			else:
-				pageName = "page"
-				layoutName = "layout"
+				urlGenerator = self.__articleUrl
+				pages = self.__article
 
-			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(renderModel["content"], renderModel)
-			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[pageName], renderModel)
-			renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[layoutName], renderModel)
-			self.__fileManager.writeFile(outputFilename, self.__renderer.render(renderModel["content"], renderModel))
+			for currentPage in pages:
+				self.__refreshUrls(pages, currentPage, urlGenerator)
+				if type == "articleIndex":
+					for cp in pages:
+						self.__refreshUrls(currentPage["article"], cp, self.__articleUrl)
+				renderModel = self.__generateRenderModel(pages, currentPage, type)
+
+				processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(urlGenerator, renderModel)
+				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
+				Console.info("Writing %s" % outputFilename)
+
+				self.__jasyCommandsHandling(renderModel, outputFilename)
+
+				outputContent = self.__processOutputContent(renderModel, type)
+				self.__fileManager.writeFile(outputFilename, self.__cleanHtml(outputContent))
 
 		Console.outdent()
+		
+		if self.__article:
+			Console.info("Generate feed")
+			Console.indent()
+
+			for language in self.__languages:
+				sortedArticles = sorted([article for article in self.__article if article["lang"] == language], key=self.__articleSorter)
+
+				renderModel = {
+					'config' : self.config,
+					'site' : {
+						'name' : self.sitename,
+						'url' : self.siteurl
+					},
+					"current" : {
+						"lang" : language
+					},
+					"now" : datetime.datetime.now(tz=dateutil.tz.tzlocal()).replace(microsecond=0).isoformat(),
+					"article" : sortedArticles[:self.config["blog"]["itemsInFeed"]]
+				}
+				
+
+				feedUrl = self.__renderer.render(self.__feedUrl, renderModel)
+				renderModel["feedurl"] = feedUrl
+
+				outputContent = self.__safeRenderer.render(self.__templates["%s.Feed" % self.theme], renderModel)
+				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), feedUrl))
+				self.__fileManager.writeFile(outputFilename, outputContent)
+
+			Console.outdent()
+		
+
+
+	def __cleanHtml(self, content):
+		return content
+
+
+	def __articleSorter(self, item):
+		return item["date"]
+
+
+	def __generateRenderModel(self, pages, currentPage, pageType):
+		res = {}
+		for key in currentPage:
+			res[key] = currentPage[key]
+
+		res["type"] = pageType
+		res["current"] = currentPage
+		res["pages"] = self.__filterAndSortPages(pages, currentPage)
+		res["config"] = dict(itertools.chain(self.config.items(), {
+				"sitename" : self.sitename,
+				"siteurl" : self.siteurl
+			}.items()))
+		res["languages"] = self.__mapLanguages(self.__languages, currentPage)
+
+		return res
+
+
+
+	def __processOutputContent(self, renderModel, type):
+		pageName = "%(theme)s.%(type)s" % {
+			"theme": self.theme,
+			"type": type[0].upper() + type[1:]
+		}
+		layoutName = "%s.Layout" % self.theme
+
+		if not layoutName in self.__templates:
+			raise RuntimeError("Template %s not found" % layoutName)
+		if not pageName in self.__templates:
+			raise RuntimeError("Template %s not found" % pageName)
+
+		renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(renderModel["content"], renderModel)
+		renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[pageName], renderModel)
+		renderModel["current"]["content"] = renderModel["content"] = self.__renderer.render(self.__templates[layoutName], renderModel)
+
+		return self.__renderer.render(renderModel["content"], renderModel)

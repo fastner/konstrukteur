@@ -15,10 +15,18 @@ def parse(filename):
 	page = {}
 
 	parsedContent = BeautifulSoup(open(filename, "rt").read())
-	page["content"] = "".join([str(tag) for tag in parsedContent.find("body").contents]) 
+
+	body = parsedContent.find("body")
+
+	page["content"] = "".join([str(tag) for tag in body.contents])
 	page["title"] = parsedContent.title.string
 
+	page["summary"] = body.p.get_text()
+
 	for meta in parsedContent.find_all("meta"):
-		page[meta["name"].lower()] = meta["contents"]
+		if not hasattr(meta, "name") or not hasattr(meta, "content"):
+			raise RuntimeError("Meta elements must have attributes name and content : %s" % filename)
+
+		page[meta["name"].lower()] = meta["content"]
 
 	return page
