@@ -39,7 +39,8 @@ if uses == "distribute":
 			"pathtools>=0.1.1",
 			"PyYAML>=3.09",
 			"argh>=0.8.1",
-			"unidecode>=0.4.14"
+			"unidecode>=0.4.14",
+			"python-dateutil>=2.2"
 		],
 
 #		"extras_require" : {
