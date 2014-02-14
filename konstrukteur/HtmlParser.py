@@ -21,7 +21,11 @@ def parse(filename):
 	page["content"] = "".join([str(tag) for tag in body.contents])
 	page["title"] = parsedContent.title.string
 
-	page["summary"] = body.p.get_text()
+	firstP = body.p
+	if firstP:
+		page["summary"] = body.p.get_text()
+	else:
+		page["summary"] = ""
 
 	for meta in parsedContent.find_all("meta"):
 		if not hasattr(meta, "name") or not hasattr(meta, "content"):
