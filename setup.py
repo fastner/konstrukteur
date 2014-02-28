@@ -31,7 +31,7 @@ if uses == "distribute":
 		#"test_suite" : "jasy.test",
 
 		"install_requires" : [ 
-			"jasy==1.5-beta4",
+			"jasy==1.5-beta5",
 			"pystache>=0.5.3", 
 			"beautifulsoup4>=4.3.2",
 
