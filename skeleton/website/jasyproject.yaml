@@ -8,8 +8,7 @@ scan:
   "source/style/*.style": jasy.Style
   "source/translation/*.{po,xlf,properties,txt}": jasy.Translation
   "source/asset/*": jasy.Asset
-  "source/template/*.{html,tmpl}":
-    type: template.Template
+  "source/template/*.{html,tmpl}": jasy.Template
 
 konstrukteur:
   site:
