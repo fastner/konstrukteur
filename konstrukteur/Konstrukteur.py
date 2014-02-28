@@ -172,13 +172,21 @@ class Konstrukteur:
 		return re.sub(COMMAND_REGEX, commandReplacer, content)
 
 
+	def __fixName(self, name):
+		s = name.split(".")
+		sname = s[-1]
+		sname = sname[0].upper() + sname[1:]
+		return ".".join(s[:-1] + [sname])
+
+
 	def __parseTemplate(self):
 		""" Process all templates to support jasy commands """
 
 		for project in session.getProjects():
-			templates = project.getItems("template.Template")
+			templates = project.getItems("jasy.Template")
 			if templates:
 				for template, content in templates.items():
+					template = self.__fixName(template)
 					self.__templates[template] = konstrukteur.Util.fixCoreTemplating(self.__fixJasyCommands(content.getText()))
 
 		self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
