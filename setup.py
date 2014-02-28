@@ -34,6 +34,7 @@ if uses == "distribute":
 			"jasy==1.5-beta5",
 			"pystache>=0.5.3", 
 			"beautifulsoup4>=4.3.2",
+			"misaka>=1.0.2",
 
 			# Requirements of watchdog lib
 			"pathtools>=0.1.1",

@@ -3,10 +3,11 @@
 # Copyright 2013 Sebastian Fastner
 #
 
-import glob, os
+import glob, os, sys
 from jasy.core import Console
 import konstrukteur.Language
 import konstrukteur.Util
+import konstrukteur.MarkdownParser
 
 class ContentParser:
 	""" Content parser class for Konstrukteur """
@@ -17,6 +18,7 @@ class ContentParser:
 
 		self.__extensionParser = {}
 		self.__extensionParser["html"] = konstrukteur.HtmlParser
+		self.__extensionParser["markdown"] = konstrukteur.MarkdownParser
 
 		self.__id = 1
 		self.__commandReplacer = []

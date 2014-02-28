@@ -57,7 +57,7 @@ def build(regenerate, profile):
 	app.articleurl = session.getMain().getConfigValue("konstrukteur.blog.articleurl", "{{current.lang}}/blog/{{current.slug}}")
 	app.pageurl = session.getMain().getConfigValue("konstrukteur.pageurl", "{{current.lang}}/{{current.slug}}")
 	app.feedurl = session.getMain().getConfigValue("konstrukteur.blog.feedurl", "feed.{{current.lang}}.xml")
-	app.extensions = session.getMain().getConfigValue("konstrukteur.extensions", ["md", "html"])
+	app.extensions = session.getMain().getConfigValue("konstrukteur.extensions", ["markdown", "html"])
 	app.theme = session.getMain().getConfigValue("konstrukteur.theme", session.getMain().getName())
 	app.defaultLanguage = session.getMain().getConfigValue("konstrukteur.defaultLanguage", "en")
 

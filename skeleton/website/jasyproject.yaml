@@ -29,7 +29,7 @@ konstrukteur:
 
   pageurl: "{{current.lang}}/{{current.slug}}"
   extensions:
-    - md
+    - markdown
     - html
 
   defaultLanguage: en
