@@ -9,6 +9,14 @@ from jasy.env.State import session
 from jasy.core import Console
 from bs4 import BeautifulSoup
 import misaka
+import re
+import urllib
+
+jasyCommands = "%7B%7B@.*?%7D%7D"
+
+def replaceJasyCommand(matchobj):
+	cmd = urllib.parse.unquote(matchobj.group(0))
+	return cmd
 
 def parse(filename):
 	""" HTML parser class for Konstrukteur """
@@ -19,6 +27,7 @@ def parse(filename):
 
 	content = open(filename, "rt").read().split("\n---\n", 1)
 	parsedContent = md.render(content[1])
+	parsedContent = re.sub(jasyCommands, replaceJasyCommand, parsedContent)
 
 	page["content"] = parsedContent
 
