@@ -1,4 +1,5 @@
 from jasy.core.Profile import Profile
+import jasy.build.Manager
 
 @task
 def build(regenerate = False):
@@ -11,4 +12,4 @@ def build(regenerate = False):
 
 	konstrukteur.build(profile, regenerate)
 
-	BuildTool.run(profile)
+	jasy.build.Manager.run(profile)
