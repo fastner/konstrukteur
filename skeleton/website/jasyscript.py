@@ -1,6 +1,3 @@
-from jasy.core.Profile import Profile
-import jasy.build.Manager
-
 @task
 def build(regenerate = False):
 	"""Generate source (development) version"""
@@ -12,4 +9,4 @@ def build(regenerate = False):
 
 	konstrukteur.build(profile, regenerate)
 
-	jasy.build.Manager.run(profile)
+	Build.run(profile)
