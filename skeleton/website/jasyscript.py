@@ -3,7 +3,7 @@ import jasy.build.Manager
 
 @task
 def build(regenerate = False):
-	"""Generate source (development) version"""
+	"""Generate pages"""
 
 	profile = Profile(session)
 	profile.registerPart("$${name}", styleName="$${name}.Main")
