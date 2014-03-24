@@ -1,9 +1,8 @@
-from jasy.core.Profile import Profile
-import jasy.build.Manager
+from jasy.core.FileManager import FileManager
 
 @task
 def build(regenerate = False):
-	"""Generate source (development) version"""
+	"""Generate pages"""
 
 	profile = Profile(session)
 	profile.registerPart("$${name}", styleName="$${name}.Main")
