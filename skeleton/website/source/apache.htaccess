@@ -1,0 +1,8 @@
+<Files ~ "[^.]">
+	ForceType text/html
+</Files>
+<Files "feed*.xml">
+	ForceType application/atom+xml
+</Files>
+
+DirectoryIndex index

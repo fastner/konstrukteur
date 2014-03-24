@@ -12,4 +12,7 @@ def build(regenerate = False):
 
 	konstrukteur.build(profile, regenerate)
 
-	jasy.build.Manager.run(profile)
+	Build.run(profile)
+
+	fileManager = FileManager(profile)
+	fileManager.updateFile("source/apache.htaccess", "{{destination}}/.htaccess")
