@@ -201,8 +201,8 @@ class Konstrukteur:
 		self.__article = []
 		self.__languages = []
 
-		contentParser.parse(os.path.join(self.__contentPath, "pages"), self.__pages, self.__languages)
-		contentParser.parse(os.path.join(self.__contentPath, "article"), self.__article, self.__languages)
+		contentParser.parse(os.path.join(self.__contentPath, "page"), self.__pages, self.__languages)
+		contentParser.parse(os.path.join(self.__contentPath, "post"), self.__article, self.__languages)
 
 		for article in self.__article:
 			if not "date" in article:
