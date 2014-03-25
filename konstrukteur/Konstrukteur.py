@@ -111,7 +111,7 @@ class Konstrukteur:
 
 	def build(self, profile):
 		""" Build static website """
-		Console.header("Konstrukteur - static website generator")
+		Console.info("Konstrukteur - static website generator")
 		Console.indent()
 
 		self.__templatePath = os.path.join("source", "template")
