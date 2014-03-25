@@ -104,6 +104,7 @@ class Konstrukteur:
 		self.__commandReplacer = []
 		self.__id = 0
 		self.__templates = {}
+		self.__cache = session.getMain().getCache()
 
 
 	def build(self, profile):
