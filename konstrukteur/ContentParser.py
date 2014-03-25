@@ -4,7 +4,10 @@
 #
 
 import glob, os, sys
-from jasy.core import Console
+
+import jasy.core.Console as Console
+import jasy.core.File as File
+
 import konstrukteur.Language
 import konstrukteur.Util
 import konstrukteur.MarkdownParser
@@ -88,6 +91,7 @@ class ContentParser:
 
 		# Add modification time
 		parsed["mtime"] = os.path.getmtime(filename)
+		parsed["hash"] = File.sha1(filename)[0:8]
 
 		# Return result
 		return parsed
