@@ -47,7 +47,7 @@ class ContentParser:
 					Console.error("Error parsing file %s" % filename)
 					continue
 
-				self.postProcess(parsed, languages)
+				self.postProcess(parsed, filename, languages)
 				collection.append(parsed)
 
 		Console.info("Registered %s files.", len(collection))
@@ -56,7 +56,7 @@ class ContentParser:
 		return collection
 
 
-	def postProcess(self, parsed, languages):
+	def postProcess(self, parsed, filename, languages):
 		for key, value in parsed.items():
 			if type(value) is str:
 				parsed[key] = self.__fixJasyCommands(value)
