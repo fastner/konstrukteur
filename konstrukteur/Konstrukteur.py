@@ -106,9 +106,9 @@ class Konstrukteur:
 		Console.header("Konstrukteur - static website generator")
 		Console.indent()
 
-		self.__templatePath = os.path.join(session.getMain().getPath(), "source", "template") #, self.theme)
-		self.__contentPath = os.path.join(session.getMain().getPath(), "source", "content")
-		self.__sourcePath = os.path.join(session.getMain().getPath(), "source")
+		self.__templatePath = os.path.join("source", "template")
+		self.__contentPath = os.path.join("source", "content")
+		self.__sourcePath = os.path.join("source")
 
 		self.__profile = profile
 		self.__fileManager = FileManager.FileManager(profile)
@@ -201,7 +201,7 @@ class Konstrukteur:
 		self.__article = []
 		self.__languages = []
 
-		Console.info("Parsing conent...")
+		Console.info("Parsing content...")
 		Console.indent()
 		contentParser.parse(os.path.join(self.__contentPath, "page"), self.__pages, self.__languages)
 		contentParser.parse(os.path.join(self.__contentPath, "post"), self.__article, self.__languages)
@@ -213,7 +213,7 @@ class Konstrukteur:
 				raise RuntimeError("No date metadata in article : " + article["title"])
 			else:
 				try:
-					article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())TabError
+					article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())
 				except:
 					raise Exception("Unable to parse date: %s" % article["date"])
 
