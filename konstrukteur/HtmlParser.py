@@ -1,6 +1,7 @@
 #
 # Konstrukteur - Static website generator
-# Copyright 2013 Sebastian Fastner
+# Copyright 2013-2014 Sebastian Fastner
+# Copyright 2014 Sebastian Werner
 #
 
 __all__ = ["parse"]
