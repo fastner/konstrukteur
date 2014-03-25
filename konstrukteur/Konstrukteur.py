@@ -15,13 +15,16 @@ sys.path.insert(0,path)
 __all__ = ["build"]
 
 from jasy.env.State import session
-from jasy.core import Console
-from jasy.core import FileManager
+import jasy.core.Console as Console
+import jasy.core.FileManager as FileManager
+import jasy.core.Cache as Cache
+
 import pystache
 import os.path
 import glob
 import re
 import operator
+
 import konstrukteur.HtmlParser
 import konstrukteur.Language
 import konstrukteur.FileWatcher
@@ -33,8 +36,10 @@ import dateutil.tz
 
 import datetime
 import time
+
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
+
 import itertools
 
 from unidecode import unidecode
@@ -99,6 +104,7 @@ class Konstrukteur:
 		self.__commandReplacer = []
 		self.__id = 0
 		self.__templates = {}
+		self.__cache = session.getMain().getCache()
 
 
 	def build(self, profile):
@@ -106,13 +112,13 @@ class Konstrukteur:
 		Console.header("Konstrukteur - static website generator")
 		Console.indent()
 
-		self.__templatePath = os.path.join(session.getMain().getPath(), "source", "template") #, self.theme)
-		self.__contentPath = os.path.join(session.getMain().getPath(), "source", "content")
-		self.__sourcePath = os.path.join(session.getMain().getPath(), "source")
+		self.__templatePath = os.path.join("source", "template")
+		self.__contentPath = os.path.join("source", "content")
+		self.__sourcePath = os.path.join("source")
 
 		self.__profile = profile
 		self.__fileManager = FileManager.FileManager(profile)
-		
+
 		if not os.path.exists(self.__templatePath):
 			raise RuntimeError("Path to theme not found : %s" % self.__templatePath)
 		if not os.path.exists(self.__contentPath):
@@ -162,10 +168,10 @@ class Konstrukteur:
 			cmd = command.group("cmd")
 			params = command.group("params").split()
 			id = "jasy_command_%s" % self.__id
-			
+
 			self.__id += 1
 			self.__commandReplacer.append((id, cmd, params))
-		
+
 			return "{{%s}}" % id
 
 
@@ -201,14 +207,21 @@ class Konstrukteur:
 		self.__article = []
 		self.__languages = []
 
+		Console.info("Parsing content...")
+		Console.indent()
 		contentParser.parse(os.path.join(self.__contentPath, "page"), self.__pages, self.__languages)
 		contentParser.parse(os.path.join(self.__contentPath, "post"), self.__article, self.__languages)
+		Console.outdent()
 
+		Console.info("Post-processing articles...")
 		for article in self.__article:
 			if not "date" in article:
 				raise RuntimeError("No date metadata in article : " + article["title"])
 			else:
-				article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())
+				try:
+					article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())
+				except:
+					raise Exception("Unable to parse date: %s" % article["date"])
 
 		for language in self.__languages:
 			if not language in self.__locale:
@@ -221,7 +234,7 @@ class Konstrukteur:
 		def languageMap(value):
 			currentLanguage = value == currentPage["lang"]
 			currentName = self.__locale[value].getName(value)
-			
+
 			if "translations" not in currentPage:
 				return None
 
@@ -339,7 +352,7 @@ class Konstrukteur:
 				page += 1
 
 		return indexPages
-		
+
 
 
 	def __outputContent(self):
@@ -365,7 +378,11 @@ class Konstrukteur:
 				urlGenerator = self.__articleUrl
 				pages = self.__article
 
-			for currentPage in pages:
+			length = len(pages)
+			for position, currentPage in enumerate(pages):
+
+				Console.info("Generating %s/%s: %s...", position+1, length, currentPage["slug"])
+
 				self.__refreshUrls(pages, currentPage, urlGenerator)
 				if type == "articleIndex":
 					for cp in pages:
@@ -374,7 +391,6 @@ class Konstrukteur:
 
 				processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(urlGenerator, renderModel)
 				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
-				Console.info("Writing %s" % outputFilename)
 
 				self.__jasyCommandsHandling(renderModel, outputFilename)
 
@@ -382,7 +398,7 @@ class Konstrukteur:
 				self.__fileManager.writeFile(outputFilename, self.__cleanHtml(outputContent))
 
 		Console.outdent()
-		
+
 		if self.__article:
 			Console.info("Generate feed")
 			Console.indent()
@@ -402,7 +418,7 @@ class Konstrukteur:
 					"now" : datetime.datetime.now(tz=dateutil.tz.tzlocal()).replace(microsecond=0).isoformat(),
 					"article" : sortedArticles[:self.config["blog"]["itemsInFeed"]]
 				}
-				
+
 
 				feedUrl = self.__renderer.render(self.__feedUrl, renderModel)
 				renderModel["feedurl"] = feedUrl
@@ -412,7 +428,7 @@ class Konstrukteur:
 				self.__fileManager.writeFile(outputFilename, outputContent)
 
 			Console.outdent()
-		
+
 
 
 	def __cleanHtml(self, content):

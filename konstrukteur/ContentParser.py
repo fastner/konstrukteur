@@ -30,8 +30,7 @@ class ContentParser:
 
 
 	def parse(self, pagesPath, pages, languages):
-		#pagesPath = os.path.join(self.__contentPath, sourcePath)
-		Console.info("Parse content files at %s" % pagesPath)
+		Console.info("Processing %s..." % pagesPath)
 		Console.indent()
 
 		for extension in self.__extensions:
@@ -52,10 +51,11 @@ class ContentParser:
 
 	def generateFields(self, page, languages):
 		for key, value in page.items():
-			page[key] = self.__fixJasyCommands(value)
+			if type(value) is str:
+				page[key] = self.__fixJasyCommands(value)
 
 		if "slug" in page:
-			page["slug"] =konstrukteur.Util.fixSlug(page["slug"])
+			page["slug"] = konstrukteur.Util.fixSlug(page["slug"])
 		else:
 			page["slug"] = konstrukteur.Util.fixSlug(page["title"])
 
@@ -71,7 +71,6 @@ class ContentParser:
 		if not "lang" in page:
 			page["lang"] = self.__defaultLanguage
 
-
 		if page["lang"] not in languages:
 			languages.append(page["lang"])
 
@@ -84,7 +83,14 @@ class ContentParser:
 		if not extension in self.__extensionParser:
 			raise RuntimeError("No content parser for extension %s registered" % extension)
 
-		return self.__extensionParser[extension].parse(filename)
+		# Delegate to main parser
+		parsed = self.__extensionParser[extension].parse(filename)
+
+		# Add modification time
+		parsed["mtime"] = os.path.getmtime(filename)
+
+		# Return result
+		return parsed
 
 
 
