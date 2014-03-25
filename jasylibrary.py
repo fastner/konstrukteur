@@ -11,7 +11,7 @@ import jasy.asset.Manager
 @share
 def build(profile, regenerate = False):
 	""" Build static website """
-	
+
 	def getPartUrl(part, type):
 		folder = ""
 		if type == "css":
@@ -21,7 +21,7 @@ def build(profile, regenerate = False):
 			else:
 				# New jasy >= 1.5-beta4
 				folder = profile.getCssOutputFolder()
-		
+
 		outputPath = os.path.relpath(os.path.join(profile.getDestinationPath(), folder), profile.getWorkingPath())
 		filename = profile.expandFileName("%s/%s-{{id}}.%s" % (outputPath, part, type))
 
@@ -29,5 +29,5 @@ def build(profile, regenerate = False):
 
 	profile.addCommand("part.url", getPartUrl, "url")
 
-	for permutation in profile.permutate():
-		konstrukteur.Konstrukteur.build(regenerate, profile)
+	#for permutation in profile.permutate():
+	konstrukteur.Konstrukteur.build(regenerate, profile)
