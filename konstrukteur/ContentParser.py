@@ -86,7 +86,7 @@ class ContentParser:
 		parsed = self.__extensionParser[extension].parse(filename)
 
 		# Add modification time
-		parsed.mtime = os.path.getmtime(filename)
+		parsed["mtime"] = os.path.getmtime(filename)
 
 		# Return result
 		return parsed
