@@ -388,8 +388,13 @@ class Konstrukteur:
 				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
 
 				# Use cache for speed-up re-runs
-				cacheId = "%s-%s-%s-%s" % (type, currentPage["slug"], currentPage["date"], self.__profile.getId())
-				resultContent = self.__cache.read(cacheId, currentPage["mtime"])
+				if type == "page" or type == "article":
+					cacheId = "%s-%s-%s-%s" % (type, currentPage["slug"], currentPage["date"], self.__profile.getId())
+					resultContent = self.__cache.read(cacheId, currentPage["mtime"])
+				else:
+					cacheId = None
+					resultContent = None
+
 				if resultContent is None:
 					self.__refreshUrls(pages, currentPage, urlGenerator)
 					if type == "articleIndex":
@@ -402,7 +407,8 @@ class Konstrukteur:
 					resultContent = self.__cleanHtml(outputContent)
 
 					# Store result into cache
-					self.__cache.store(cacheId, resultContent, currentPage["mtime"])
+					if cacheId:
+						self.__cache.store(cacheId, resultContent, currentPage["mtime"])
 
 				# Write actual output file
 				self.__fileManager.writeFile(outputFilename, resultContent)
