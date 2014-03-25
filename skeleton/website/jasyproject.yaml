@@ -6,7 +6,7 @@ requires:
 scan:
   "source/class/*.js": jasy.Class
   "source/style/*.style": jasy.Style
-  "source/translation/*.{po,xlf,properties,txt}": jasy.Translation
+  "source/translation/*.po": jasy.Translation
   "source/asset/*": jasy.Asset
   "source/template/*.{html,tmpl}": jasy.Template
 

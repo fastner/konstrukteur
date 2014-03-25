@@ -1,9 +1,8 @@
-from jasy.core.Profile import Profile
-import jasy.build.Manager
+from jasy.core.FileManager import FileManager
 
 @task
 def build(regenerate = False):
-	"""Generate source (development) version"""
+	"""Generate pages"""
 
 	profile = Profile(session)
 	profile.registerPart("$${name}", styleName="$${name}.Main")
@@ -12,4 +11,7 @@ def build(regenerate = False):
 
 	konstrukteur.build(profile, regenerate)
 
-	jasy.build.Manager.run(profile)
+	Build.run(profile)
+
+	fileManager = FileManager(profile)
+	fileManager.updateFile("source/apache.htaccess", "{{destination}}/.htaccess")
