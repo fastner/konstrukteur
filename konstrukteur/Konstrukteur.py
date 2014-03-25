@@ -372,7 +372,11 @@ class Konstrukteur:
 				urlGenerator = self.__articleUrl
 				pages = self.__article
 
-			for currentPage in pages:
+			length = len(pages)
+			for position, currentPage in enumerate(pages):
+
+				Console.info("Generating %s/%s: %s...", position+1, length, currentPage["slug"])
+
 				self.__refreshUrls(pages, currentPage, urlGenerator)
 				if type == "articleIndex":
 					for cp in pages:
@@ -381,7 +385,6 @@ class Konstrukteur:
 
 				processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(urlGenerator, renderModel)
 				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
-				Console.info("Writing %s" % outputFilename)
 
 				self.__jasyCommandsHandling(renderModel, outputFilename)
 
