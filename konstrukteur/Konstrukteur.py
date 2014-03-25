@@ -15,13 +15,16 @@ sys.path.insert(0,path)
 __all__ = ["build"]
 
 from jasy.env.State import session
-from jasy.core import Console
-from jasy.core import FileManager
+import jasy.core.Console as Console
+import jasy.core.FileManager as FileManager
+import jasy.core.Cache as Cache
+
 import pystache
 import os.path
 import glob
 import re
 import operator
+
 import konstrukteur.HtmlParser
 import konstrukteur.Language
 import konstrukteur.FileWatcher
@@ -33,8 +36,10 @@ import dateutil.tz
 
 import datetime
 import time
+
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
+
 import itertools
 
 from unidecode import unidecode
