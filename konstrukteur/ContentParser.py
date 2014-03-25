@@ -70,7 +70,6 @@ class ContentParser:
 		if not "lang" in page:
 			page["lang"] = self.__defaultLanguage
 
-
 		if page["lang"] not in languages:
 			languages.append(page["lang"])
 
@@ -83,7 +82,14 @@ class ContentParser:
 		if not extension in self.__extensionParser:
 			raise RuntimeError("No content parser for extension %s registered" % extension)
 
-		return self.__extensionParser[extension].parse(filename)
+		# Delegate to main parser
+		parsed = self.__extensionParser[extension].parse(filename)
+
+		# Add modification time
+		parsed.mtime = os.path.getmtime(filename)
+
+		# Return result
+		return parsed
 
 
 
