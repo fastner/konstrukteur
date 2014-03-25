@@ -1,11 +1,11 @@
 #
-# Konstrukteur - Static website generator
+# Konstrukteur - Static Site Generator
 # Copyright 2013-2014 Sebastian Fastner
 # Copyright 2014 Sebastian Werner
 #
 
 """
-**Konstrukteur - Static website generator**
+**Konstrukteur - Static Site Generator**
 
 Konstrukteur is a website generator that uses a template and content files
 to create static website output.

@@ -1,5 +1,5 @@
 #
-# Konstrukteur - Static website generator
+# Konstrukteur - Static Site Generator
 # Copyright 2013-2014 Sebastian Fastner
 # Copyright 2014 Sebastian Werner
 #
