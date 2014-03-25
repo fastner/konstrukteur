@@ -42,12 +42,12 @@ class ContentParser:
 				basename = os.path.basename(filename)
 				Console.debug("Parsing %s" % basename)
 
-				parsed = self.__parseContentFile(filename, extension)
+				parsed = self.__parseWithSpecificParser(filename, extension)
 				if not parsed:
-					Console.error("Error parsing %s" % filename)
+					Console.error("Error parsing file %s" % filename)
 					continue
 
-				self.generateFields(parsed, languages)
+				self.postProcess(parsed, languages)
 				collection.append(parsed)
 
 		Console.info("Registered %s files.", len(collection))
@@ -56,42 +56,30 @@ class ContentParser:
 		return collection
 
 
-	def generateFields(self, page, languages):
-		for key, value in page.items():
+	def postProcess(self, parsed, languages):
+		for key, value in parsed.items():
 			if type(value) is str:
-				page[key] = self.__fixJasyCommands(value)
+				parsed[key] = self.__fixJasyCommands(value)
 
-		if "slug" in page:
-			page["slug"] = Util.fixSlug(page["slug"])
+		if "slug" in parsed:
+			parsed["slug"] = Util.fixSlug(parsed["slug"])
 		else:
-			page["slug"] = Util.fixSlug(page["title"])
+			parsed["slug"] = Util.fixSlug(parsed["title"])
 
-		page["content"] = Util.fixCoreTemplating(page["content"])
+		parsed["content"] = Util.fixCoreTemplating(parsed["content"])
 
-		if not "status" in page:
-			page["status"] = "published"
-		if not "pos" in page:
-			page["pos"] = 0
+		if not "status" in parsed:
+			parsed["status"] = "published"
+		if not "pos" in parsed:
+			parsed["pos"] = 0
 		else:
-			page["pos"] = int(page["pos"])
+			parsed["pos"] = int(parsed["pos"])
 
-		if not "lang" in page:
-			page["lang"] = self.__defaultLanguage
+		if not "lang" in parsed:
+			parsed["lang"] = self.__defaultLanguage
 
-		if page["lang"] not in languages:
-			languages.append(page["lang"])
-
-		return page
-
-
-	def __parseContentFile(self, filename, extension):
-		""" Parse single content file """
-
-		if not extension in self.__extensionParser:
-			raise RuntimeError("No parser for extension %s registered!" % extension)
-
-		# Delegate to main parser
-		parsed = self.__extensionParser[extension].parse(filename)
+		if parsed["lang"] not in languages:
+			languages.append(parsed["lang"])
 
 		# Add modification time and short hash
 		parsed["mtime"] = os.path.getmtime(filename)
@@ -101,5 +89,15 @@ class ContentParser:
 		if "date" in parsed:
 			parsed["date"] = dateutil.parser.parse(parsed["date"]).replace(tzinfo=dateutil.tz.tzlocal())
 
-		# Return result
 		return parsed
+
+
+	def __parseWithSpecificParser(self, filename, extension):
+		""" Parse single content file """
+
+		if not extension in self.__extensionParser:
+			raise RuntimeError("No parser for extension %s registered!" % extension)
+
+		# Delegate to main parser
+		return self.__extensionParser[extension].parse(filename)
+

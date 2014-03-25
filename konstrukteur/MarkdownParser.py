@@ -6,9 +6,6 @@
 
 __all__ = ["parse"]
 
-from jasy.env.State import session
-from jasy.core import Console
-
 from bs4 import BeautifulSoup
 import misaka
 import re
