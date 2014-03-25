@@ -68,9 +68,9 @@ def build(regenerate, profile):
 
 	app.sitename = session.getMain().getConfigValue("konstrukteur.site.name", "Test website")
 	app.siteurl = session.getMain().getConfigValue("konstrukteur.site.url", "//localhost")
-	app.posturl = session.getMain().getConfigValue("konstrukteur.blog.posturl", "{{current.lang}}/blog/{{current.slug}}")
-	app.pageurl = session.getMain().getConfigValue("konstrukteur.pageurl", "{{current.lang}}/{{current.slug}}")
-	app.feedurl = session.getMain().getConfigValue("konstrukteur.blog.feedurl", "feed.{{current.lang}}.xml")
+	app.posturl = session.getMain().getConfigValue("konstrukteur.blog.postUrl", "{{current.lang}}/blog/{{current.slug}}")
+	app.pageurl = session.getMain().getConfigValue("konstrukteur.pageUrl", "{{current.lang}}/{{current.slug}}")
+	app.feedurl = session.getMain().getConfigValue("konstrukteur.blog.feedUrl", "feed.{{current.lang}}.xml")
 	app.extensions = session.getMain().getConfigValue("konstrukteur.extensions", ["markdown", "html"])
 	app.theme = session.getMain().getConfigValue("konstrukteur.theme", session.getMain().getName())
 	app.defaultLanguage = session.getMain().getConfigValue("konstrukteur.defaultLanguage", "en")
@@ -99,6 +99,7 @@ class Konstrukteur:
 	__templates = None
 	__pages = None
 	__languages = None
+
 	__postUrl = None
 	__pageUrl = None
 	__feedUrl = None
@@ -129,7 +130,7 @@ class Konstrukteur:
 		self.__fileManager = FileManager.FileManager(profile)
 
 		if not os.path.exists(self.__templatePath):
-			raise RuntimeError("Path to theme not found : %s" % self.__templatePath)
+			raise RuntimeError("Path to templates not found : %s" % self.__templatePath)
 		if not os.path.exists(self.__contentPath):
 			raise RuntimeError("Path to content not found : %s" % self.__contentPath)
 
@@ -166,6 +167,7 @@ class Konstrukteur:
 
 	def __build(self):
 		""" Build static website """
+
 		self.__parseContent()
 		self.__outputContent()
 
@@ -182,7 +184,6 @@ class Konstrukteur:
 			self.__commandReplacer.append((id, cmd, params))
 
 			return "{{%s}}" % id
-
 
 		return re.sub(COMMAND_REGEX, commandReplacer, content)
 
@@ -218,8 +219,8 @@ class Konstrukteur:
 
 		Console.info("Parsing content...")
 		Console.indent()
-		contentParser.parse(os.path.join(self.__contentPath, "page"), self.__pages, self.__languages)
-		contentParser.parse(os.path.join(self.__contentPath, "post"), self.__posts, self.__languages)
+		self.__pages = contentParser.parse(os.path.join(self.__contentPath, "page"), self.__languages)
+		self.__posts = contentParser.parse(os.path.join(self.__contentPath, "post"), self.__languages)
 		Console.outdent()
 
 		Console.info("Post-processing posts...")

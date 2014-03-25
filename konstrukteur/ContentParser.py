@@ -32,24 +32,28 @@ class ContentParser:
 		self.__defaultLanguage = defaultLanguage
 
 
-	def parse(self, pagesPath, pages, languages):
-		Console.info("Processing %s..." % pagesPath)
+	def parse(self, path, languages):
+		Console.info("Processing %s..." % path)
 		Console.indent()
 
+		collection = []
 		for extension in self.__extensions:
-			for filename in glob.iglob(os.path.join(pagesPath, "*.%s" % extension)):
+			for filename in glob.iglob(os.path.join(path, "*.%s" % extension)):
 				basename = os.path.basename(filename)
 				Console.debug("Parsing %s" % basename)
 
-				page = self.__parseContentFile(filename, extension)
-
-				if page:
-					self.generateFields(page, languages)
-					pages.append(page)
-				else:
+				parsed = self.__parseContentFile(filename, extension)
+				if not parsed:
 					Console.error("Error parsing %s" % filename)
+					continue
 
+				self.generateFields(parsed, languages)
+				collection.append(parsed)
+
+		Console.info("Registered %s files.", len(collection))
 		Console.outdent()
+
+		return collection
 
 
 	def generateFields(self, page, languages):
