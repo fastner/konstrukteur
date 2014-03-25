@@ -9,26 +9,25 @@ import jasy.core.Console as Console
 import jasy.core.File as File
 
 import konstrukteur.Language
-import konstrukteur.Util
+import konstrukteur.Util as Util
 import konstrukteur.MarkdownParser
 
 class ContentParser:
 	""" Content parser class for Konstrukteur """
 
-
 	def __init__(self, extensions, fixJasyCommands, defaultLanguage):
 		self.__extensions = extensions
-
-		self.__extensionParser = {}
-		self.__extensionParser["html"] = konstrukteur.HtmlParser
-		self.__extensionParser["markdown"] = konstrukteur.MarkdownParser
+		self.__extensionParser = {
+			"html" : konstrukteur.HtmlParser,
+			"markdown" : konstrukteur.MarkdownParser,
+			"md" : konstrukteur.MarkdownParser,
+			"txt" : konstrukteur.MarkdownParser
+		}
 
 		self.__id = 1
 		self.__commandReplacer = []
 		self.__fixJasyCommands = fixJasyCommands
-
 		self.__languages = {}
-
 		self.__defaultLanguage = defaultLanguage
 
 
@@ -62,11 +61,11 @@ class ContentParser:
 				page[key] = self.__fixJasyCommands(value)
 
 		if "slug" in page:
-			page["slug"] = konstrukteur.Util.fixSlug(page["slug"])
+			page["slug"] = Util.fixSlug(page["slug"])
 		else:
-			page["slug"] = konstrukteur.Util.fixSlug(page["title"])
+			page["slug"] = Util.fixSlug(page["title"])
 
-		page["content"] = konstrukteur.Util.fixCoreTemplating(page["content"])
+		page["content"] = Util.fixCoreTemplating(page["content"])
 
 		if not "status" in page:
 			page["status"] = "published"
@@ -84,24 +83,22 @@ class ContentParser:
 		return page
 
 
-
 	def __parseContentFile(self, filename, extension):
 		""" Parse single content file """
+
 		if not extension in self.__extensionParser:
-			raise RuntimeError("No content parser for extension %s registered" % extension)
+			raise RuntimeError("No parser for extension %s registered!" % extension)
 
 		# Delegate to main parser
 		parsed = self.__extensionParser[extension].parse(filename)
 
-		# Add modification time, hash and parse date
+		# Add modification time and short hash
 		parsed["mtime"] = os.path.getmtime(filename)
 		parsed["hash"] = File.sha1(filename)[0:8]
 
+		# Parse date if available
 		if "date" in parsed:
 			parsed["date"] = dateutil.parser.parse(parsed["date"]).replace(tzinfo=dateutil.tz.tzlocal())
 
 		# Return result
 		return parsed
-
-
-
