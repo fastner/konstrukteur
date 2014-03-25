@@ -51,7 +51,8 @@ class ContentParser:
 
 	def generateFields(self, page, languages):
 		for key, value in page.items():
-			page[key] = self.__fixJasyCommands(value)
+			if type(value) is str:
+				page[key] = self.__fixJasyCommands(value)
 
 		if "slug" in page:
 			page["slug"] = konstrukteur.Util.fixSlug(page["slug"])
