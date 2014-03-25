@@ -68,7 +68,7 @@ def build(regenerate, profile):
 
 	app.sitename = session.getMain().getConfigValue("konstrukteur.site.name", "Test website")
 	app.siteurl = session.getMain().getConfigValue("konstrukteur.site.url", "//localhost")
-	app.articleurl = session.getMain().getConfigValue("konstrukteur.blog.articleurl", "{{current.lang}}/blog/{{current.slug}}")
+	app.posturl = session.getMain().getConfigValue("konstrukteur.blog.posturl", "{{current.lang}}/blog/{{current.slug}}")
 	app.pageurl = session.getMain().getConfigValue("konstrukteur.pageurl", "{{current.lang}}/{{current.slug}}")
 	app.feedurl = session.getMain().getConfigValue("konstrukteur.blog.feedurl", "feed.{{current.lang}}.xml")
 	app.extensions = session.getMain().getConfigValue("konstrukteur.extensions", ["markdown", "html"])
@@ -87,7 +87,7 @@ class Konstrukteur:
 
 	sitename = None
 	siteurl = None
-	articleurl = None
+	posturl = None
 	pageurl = None
 	feedurl = None
 	extensions = None
@@ -99,7 +99,7 @@ class Konstrukteur:
 	__templates = None
 	__pages = None
 	__languages = None
-	__articleUrl = None
+	__postUrl = None
 	__pageUrl = None
 	__feedUrl = None
 
@@ -138,7 +138,7 @@ class Konstrukteur:
 			if not theme:
 				raise RuntimeError("Theme '%s' not found" % self.theme)
 
-		self.__articleUrl = pystache.parse(self.articleurl)
+		self.__postUrl = pystache.parse(self.posturl)
 		self.__pageUrl = pystache.parse(self.pageurl)
 		self.__feedUrl = pystache.parse(self.feedurl)
 
@@ -213,24 +213,24 @@ class Konstrukteur:
 
 		contentParser = konstrukteur.ContentParser.ContentParser(self.extensions, self.__fixJasyCommands, self.defaultLanguage)
 		self.__pages = []
-		self.__article = []
+		self.__posts = []
 		self.__languages = []
 
 		Console.info("Parsing content...")
 		Console.indent()
 		contentParser.parse(os.path.join(self.__contentPath, "page"), self.__pages, self.__languages)
-		contentParser.parse(os.path.join(self.__contentPath, "post"), self.__article, self.__languages)
+		contentParser.parse(os.path.join(self.__contentPath, "post"), self.__posts, self.__languages)
 		Console.outdent()
 
-		Console.info("Post-processing articles...")
-		for article in self.__article:
-			if not "date" in article:
-				raise RuntimeError("No date metadata in article : " + article["title"])
+		Console.info("Post-processing posts...")
+		for post in self.__posts:
+			if not "date" in post:
+				raise RuntimeError("No date metadata in post : " + post["title"])
 			else:
 				try:
-					article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())
+					post["date"] = dateutil.parser.parse(post["date"]).replace(tzinfo=dateutil.tz.tzlocal())
 				except:
-					raise Exception("Unable to parse date: %s" % article["date"])
+					raise Exception("Unable to parse date: %s" % post["date"])
 
 		for language in self.__languages:
 			if not language in self.__locale:
@@ -327,7 +327,7 @@ class Konstrukteur:
 		}, self.__languages)
 
 
-	def __generateArticleIndex(self):
+	def __generatePostIndex(self):
 		indexPages = []
 		itemsInIndex = self.config["blog"]["itemsInIndex"]
 
@@ -340,11 +340,11 @@ class Konstrukteur:
 		for language in self.__languages:
 
 			indexTitle = self.config["blog"]["indexTitle"][language] if "indexTitle" in self.config["blog"] else "Index %d"
-			sortedArticles = sorted([article for article in self.__article if article["lang"] == language], key=self.__articleSorter)
+			sortedPosts = sorted([post for post in self.__posts if post["lang"] == language], key=self.__postSorter)
 
 			pos = 0
 			page = 1
-			while pos < len(sortedArticles):
+			while pos < len(sortedPosts):
 				self.__renderer.render(indexTitle, {
 					"current" : {
 						"pageno" : page,
@@ -354,7 +354,7 @@ class Konstrukteur:
 				indexPage = self.__createPage("index-%d" % page, indexTitle, "")
 				indexPages.append(indexPage)
 
-				indexPage["article"] = sortedArticles[pos:itemsInIndex+pos]
+				indexPage["post"] = sortedPosts[pos:itemsInIndex+pos]
 				indexPage["pageno"] = page
 
 				pos += itemsInIndex
@@ -370,34 +370,34 @@ class Konstrukteur:
 		Console.info("Generate content files...")
 		Console.indent()
 
-		if self.__article:
-			for article in self.__article:
-				article["publish"] = article["status"] == "published"
-				article["date"] = article["date"].isoformat()
+		if self.__posts:
+			for post in self.__posts:
+				post["publish"] = post["status"] == "published"
+				post["date"] = post["date"].isoformat()
 
-		for type in ["article", "articleIndex", "page"]:
-			# Articles must be generated before articleIndex
-			if type == "articleIndex":
+		for type in ["post", "postIndex", "page"]:
+			# Posts must be generated before postIndex
+			if type == "postIndex":
 				urlGenerator = self.config["blog"]["indexurl"]
-				pages = self.__generateArticleIndex()
+				files = self.__generatePostIndex()
 			elif type == "page":
 				urlGenerator = self.__pageUrl
-				pages = self.__pages
+				files = self.__pages
 			else:
-				urlGenerator = self.__articleUrl
-				pages = self.__article
+				urlGenerator = self.__postUrl
+				files = self.__posts
 
-			length = len(pages)
-			for position, currentPage in enumerate(pages):
+			length = len(files)
+			for position, currentPage in enumerate(files):
 
 				Console.info("Generating %s %s/%s: %s...", type, position+1, length, currentPage["slug"])
 
-				renderModel = self.__generateRenderModel(pages, currentPage, type)
+				renderModel = self.__generateRenderModel(files, currentPage, type)
 				processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(urlGenerator, renderModel)
 				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
 
 				# Use cache for speed-up re-runs
-				if type == "page" or type == "article":
+				if type == "page" or type == "post":
 					cacheId = "%s-%s-%s-%s" % (type, currentPage["slug"], currentPage["date"], self.__profile.getId())
 					resultContent = self.__cache.read(cacheId, currentPage["mtime"])
 				else:
@@ -405,10 +405,10 @@ class Konstrukteur:
 					resultContent = None
 
 				if resultContent is None:
-					self.__refreshUrls(pages, currentPage, urlGenerator)
-					if type == "articleIndex":
-						for cp in pages:
-							self.__refreshUrls(currentPage["article"], cp, self.__articleUrl)
+					self.__refreshUrls(files, currentPage, urlGenerator)
+					if type == "postIndex":
+						for cp in files:
+							self.__refreshUrls(currentPage["post"], cp, self.__postUrl)
 
 					self.__jasyCommandsHandling(renderModel, outputFilename)
 
@@ -424,12 +424,12 @@ class Konstrukteur:
 
 		Console.outdent()
 
-		if self.__article:
+		if self.__posts:
 			Console.info("Generate feed")
 			Console.indent()
 
 			for language in self.__languages:
-				sortedArticles = sorted([article for article in self.__article if article["lang"] == language], key=self.__articleSorter)
+				sortedPosts = sorted([post for post in self.__posts if post["lang"] == language], key=self.__postSorter)
 
 				renderModel = {
 					'config' : self.config,
@@ -441,7 +441,7 @@ class Konstrukteur:
 						"lang" : language
 					},
 					"now" : datetime.datetime.now(tz=dateutil.tz.tzlocal()).replace(microsecond=0).isoformat(),
-					"article" : sortedArticles[:self.config["blog"]["itemsInFeed"]]
+					"post" : sortedPosts[:self.config["blog"]["itemsInFeed"]]
 				}
 
 
@@ -460,7 +460,7 @@ class Konstrukteur:
 		return BeautifulSoup(content).prettify(indent_width=2)
 
 
-	def __articleSorter(self, item):
+	def __postSorter(self, item):
 		return item["date"]
 
 
