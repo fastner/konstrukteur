@@ -54,7 +54,7 @@ class ContentParser:
 			page[key] = self.__fixJasyCommands(value)
 
 		if "slug" in page:
-			page["slug"] =konstrukteur.Util.fixSlug(page["slug"])
+			page["slug"] = konstrukteur.Util.fixSlug(page["slug"])
 		else:
 			page["slug"] = konstrukteur.Util.fixSlug(page["title"])
 
