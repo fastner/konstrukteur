@@ -213,8 +213,6 @@ class Konstrukteur:
 		""" Parse all content files in users content directory """
 
 		contentParser = konstrukteur.ContentParser.ContentParser(self.extensions, self.__fixJasyCommands, self.defaultLanguage)
-		self.__pages = []
-		self.__posts = []
 		self.__languages = []
 
 		Console.info("Parsing content...")
@@ -223,19 +221,13 @@ class Konstrukteur:
 		self.__posts = contentParser.parse(os.path.join(self.__contentPath, "post"), self.__languages)
 		Console.outdent()
 
-		Console.info("Post-processing posts...")
-		for post in self.__posts:
-			if not "date" in post:
-				raise RuntimeError("No date metadata in post : " + post["title"])
-			else:
-				try:
-					post["date"] = dateutil.parser.parse(post["date"]).replace(tzinfo=dateutil.tz.tzlocal())
-				except:
-					raise Exception("Unable to parse date: %s" % post["date"])
-
+		Console.info("Processing locales...")
+		Console.indent()
 		for language in self.__languages:
+			Console.info("Adding language: %s", language)
 			if not language in self.__locale:
 				self.__locale[language] = konstrukteur.Language.LocaleParser(language)
+		Console.outdent()
 
 
 	def __mapLanguages(self, languages, currentPage):

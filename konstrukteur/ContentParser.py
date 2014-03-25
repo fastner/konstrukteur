@@ -3,7 +3,7 @@
 # Copyright 2013 Sebastian Fastner
 #
 
-import glob, os, sys
+import glob, os, sys, dateutil
 
 import jasy.core.Console as Console
 import jasy.core.File as File
@@ -93,9 +93,12 @@ class ContentParser:
 		# Delegate to main parser
 		parsed = self.__extensionParser[extension].parse(filename)
 
-		# Add modification time
+		# Add modification time, hash and parse date
 		parsed["mtime"] = os.path.getmtime(filename)
 		parsed["hash"] = File.sha1(filename)[0:8]
+
+		if "date" in parsed:
+			parsed["date"] = dateutil.parser.parse(parsed["date"]).replace(tzinfo=dateutil.tz.tzlocal())
 
 		# Return result
 		return parsed
