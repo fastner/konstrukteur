@@ -180,7 +180,7 @@ class Konstrukteur:
 		return re.sub(COMMAND_REGEX, commandReplacer, content)
 
 
-	def __fixName(self, name):
+	def __fixTemplateName(self, name):
 		s = name.split(".")
 		sname = s[-1]
 		sname = sname[0].upper() + sname[1:]
@@ -194,7 +194,7 @@ class Konstrukteur:
 			templates = project.getItems("jasy.Template")
 			if templates:
 				for template, content in templates.items():
-					template = self.__fixName(template)
+					template = self.__fixTemplateName(template)
 					self.__templates[template] = konstrukteur.Util.fixCoreTemplating(self.__fixJasyCommands(content.getText()))
 
 		self.__renderer = pystache.Renderer(partials=self.__templates, escape=lambda u: u)
