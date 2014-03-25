@@ -21,13 +21,13 @@ def info():
 
     import jasy.core.Console as Console
 
-    print("Jasy %s is a powerful web tooling framework" % __version__)
-    print("Visit %s for details." % Console.colorize("https://github.com/sebastian-software/jasy", "underline"))
+    print("Konstrukteur %s is a static site generator" % __version__)
+    print("Visit %s for details." % Console.colorize("https://github.com/fastner/konstrukteur", "underline"))
     print()
 
 
 class UserError(Exception):
     """
-    Standard Jasy error class raised whenever something happens which the system understands (somehow excepected)
+    Standard Konstrukteur error class raised whenever something happens which the system understands (somehow excepected)
     """
     pass
