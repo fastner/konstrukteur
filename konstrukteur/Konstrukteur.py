@@ -27,6 +27,7 @@ import re
 import operator
 
 import konstrukteur.HtmlParser
+import konstrukteur.HtmlBeautifier
 import konstrukteur.Language
 import konstrukteur.FileWatcher
 import konstrukteur.ContentParser
@@ -44,16 +45,6 @@ from watchdog.events import LoggingEventHandler
 import itertools
 
 from unidecode import unidecode
-
-from bs4 import BeautifulSoup
-
-# Allow custom indenting for BS4
-# Via: http://stackoverflow.com/questions/15509397/custom-indent-width-for-beautifulsoup-prettify
-orig_prettify = BeautifulSoup.prettify
-r = re.compile(r'^(\s*)', re.MULTILINE)
-def prettify(self, encoding=None, formatter="minimal", indent_width=2):
-    return r.sub(r'\1' * indent_width, orig_prettify(self, encoding, formatter))
-BeautifulSoup.prettify = prettify
 
 
 COMMAND_REGEX = re.compile(r"{{@(?P<cmd>\S+?)(?:\s+?(?P<params>.+?))}}")
@@ -407,7 +398,7 @@ class Konstrukteur:
 					self.__jasyCommandsHandling(renderModel, outputFilename)
 
 					outputContent = self.__processOutputContent(renderModel, type)
-					resultContent = self.__cleanHtml(outputContent)
+					resultContent = konstrukteur.HtmlBeautifier.beautify(outputContent)
 
 					# Store result into cache
 					if cacheId:
@@ -447,11 +438,6 @@ class Konstrukteur:
 				self.__fileManager.writeFile(outputFilename, outputContent)
 
 			Console.outdent()
-
-
-
-	def __cleanHtml(self, content):
-		return BeautifulSoup(content).prettify(indent_width=2)
 
 
 	def __postSorter(self, item):
