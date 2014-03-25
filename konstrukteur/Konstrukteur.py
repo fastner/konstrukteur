@@ -112,7 +112,7 @@ class Konstrukteur:
 
 		self.__profile = profile
 		self.__fileManager = FileManager.FileManager(profile)
-		
+
 		if not os.path.exists(self.__templatePath):
 			raise RuntimeError("Path to theme not found : %s" % self.__templatePath)
 		if not os.path.exists(self.__contentPath):
@@ -162,10 +162,10 @@ class Konstrukteur:
 			cmd = command.group("cmd")
 			params = command.group("params").split()
 			id = "jasy_command_%s" % self.__id
-			
+
 			self.__id += 1
 			self.__commandReplacer.append((id, cmd, params))
-		
+
 			return "{{%s}}" % id
 
 
@@ -201,14 +201,21 @@ class Konstrukteur:
 		self.__article = []
 		self.__languages = []
 
+		Console.info("Parsing conent...")
+		Console.indent()
 		contentParser.parse(os.path.join(self.__contentPath, "pages"), self.__pages, self.__languages)
 		contentParser.parse(os.path.join(self.__contentPath, "article"), self.__article, self.__languages)
+		Console.outdent()
 
+		Console.info("Post-processing articles...")
 		for article in self.__article:
 			if not "date" in article:
 				raise RuntimeError("No date metadata in article : " + article["title"])
 			else:
-				article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())
+				try:
+					article["date"] = dateutil.parser.parse(article["date"]).replace(tzinfo=dateutil.tz.tzlocal())TabError
+				except:
+					raise Exception("Unable to parse date: %s" % article["date"])
 
 		for language in self.__languages:
 			if not language in self.__locale:
@@ -221,7 +228,7 @@ class Konstrukteur:
 		def languageMap(value):
 			currentLanguage = value == currentPage["lang"]
 			currentName = self.__locale[value].getName(value)
-			
+
 			if "translations" not in currentPage:
 				return None
 
@@ -339,7 +346,7 @@ class Konstrukteur:
 				page += 1
 
 		return indexPages
-		
+
 
 
 	def __outputContent(self):
@@ -382,7 +389,7 @@ class Konstrukteur:
 				self.__fileManager.writeFile(outputFilename, self.__cleanHtml(outputContent))
 
 		Console.outdent()
-		
+
 		if self.__article:
 			Console.info("Generate feed")
 			Console.indent()
@@ -402,7 +409,7 @@ class Konstrukteur:
 					"now" : datetime.datetime.now(tz=dateutil.tz.tzlocal()).replace(microsecond=0).isoformat(),
 					"article" : sortedArticles[:self.config["blog"]["itemsInFeed"]]
 				}
-				
+
 
 				feedUrl = self.__renderer.render(self.__feedUrl, renderModel)
 				renderModel["feedurl"] = feedUrl
@@ -412,7 +419,7 @@ class Konstrukteur:
 				self.__fileManager.writeFile(outputFilename, outputContent)
 
 			Console.outdent()
-		
+
 
 
 	def __cleanHtml(self, content):
