@@ -9,9 +9,9 @@ from jasy.env.State import session
 from jasy.core import Console
 from bs4 import BeautifulSoup
 
-
 def parse(filename):
-	""" HTML parser class for Konstrukteur """
+	""" HTML Parser class for Konstrukteur """
+
 	page = {}
 
 	parsedContent = BeautifulSoup(open(filename, "rt").read())

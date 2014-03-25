@@ -11,7 +11,7 @@ if sys.version < "3.2":
 	print("Konstrukteur requires Python 3.2 or higher")
 	sys.exit(1)
 
-# Prefer setuptools (aka distribute) over distutils 
+# Prefer setuptools (aka distribute) over distutils
 # - Distutils comes with Python3 but is not capable of installing requires, extras, etc.
 # - Distribute is a fork of the Setuptools project (http://packages.python.org/distribute/)
 try:
@@ -30,9 +30,9 @@ if uses == "distribute":
 
 		#"test_suite" : "jasy.test",
 
-		"install_requires" : [ 
+		"install_requires" : [
 			"jasy==1.5-beta7",
-			"pystache>=0.5.3", 
+			"pystache>=0.5.3",
 			"beautifulsoup4>=4.3.2",
 			"misaka>=1.0.2",
 
@@ -42,14 +42,7 @@ if uses == "distribute":
 			"argh>=0.8.1",
 			"unidecode>=0.4.14",
 			"python-dateutil>=2.2"
-		],
-
-#		"extras_require" : {
-#			"jsdoc" : ["misaka"],
-#			"daemon" : ["watchdog"],
-#			"sprites" : ["Pillow"],
-#			"doc" : ["sphinx"]
-#		}
+		]
 
 	}
 
@@ -89,7 +82,6 @@ setup(
 
 	# Via: http://pypi.python.org/pypi?%3Aaction=list_classifiers
 	classifiers = [
-
 		'Development Status :: 4 - Beta',
 		'Environment :: Console',
 		'Intended Audience :: Developers',
@@ -104,7 +96,6 @@ setup(
 		'Topic :: Software Development :: Code Generators',
 		'Topic :: Software Development :: Internationalization',
 		"Topic :: Internet :: WWW/HTTP"
-
 	],
 
 	packages = [
