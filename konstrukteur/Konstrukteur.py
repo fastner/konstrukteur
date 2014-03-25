@@ -202,7 +202,7 @@ class Konstrukteur:
 
 
 	def __parseContent(self):
-		""" Parse all content files in users content directory """
+		""" Parse all content items in users content directory """
 
 		contentParser = konstrukteur.ContentParser.ContentParser(self.extensions, self.__fixJasyCommands, self.defaultLanguage)
 		self.__languages = []
@@ -350,7 +350,7 @@ class Konstrukteur:
 
 
 	def __outputContent(self):
-		""" Output processed content to html files """
+		""" Output processed content to HTML """
 
 		Console.info("Generating public files...")
 		Console.indent()
@@ -362,23 +362,24 @@ class Konstrukteur:
 				post["date"] = post["date"].isoformat()
 
 
+		# Process all content types
+		# Posts must be generated before archive
 		for contentType in ["post", "archive", "page"]:
-			# Posts must be generated before archive
-			if contentType == "archive":
+			if contentType == "post":
+				urlGenerator = self.__postUrl
+				items = self.__posts
+			elif contentType == "archive":
 				urlGenerator = self.config["blog"]["archiveUrl"]
-				files = self.__generatePostIndex()
+				items = self.__generatePostIndex()
 			elif contentType == "page":
 				urlGenerator = self.__pageUrl
-				files = self.__pages
-			elif contentType == "post":
-				urlGenerator = self.__postUrl
-				files = self.__posts
+				items = self.__pages
 
-			length = len(files)
-			for position, currentPage in enumerate(files):
+			length = len(items)
+			for position, currentPage in enumerate(items):
 				Console.info("Generating %s %s/%s: %s...", contentType, position+1, length, currentPage["slug"])
 
-				renderModel = self.__generateRenderModel(files, currentPage, contentType)
+				renderModel = self.__generateRenderModel(self.__pages, currentPage, contentType)
 
 				if "url" in currentPage:
 					processedFilename = currentPage["url"]
@@ -398,9 +399,9 @@ class Konstrukteur:
 
 				# Check cache validity
 				if resultContent is None:
-					self.__refreshUrls(files, currentPage, urlGenerator)
+					self.__refreshUrls(items, currentPage, urlGenerator)
 					if contentType == "archive":
-						for cp in files:
+						for cp in items:
 							self.__refreshUrls(currentPage["post"], cp, self.__postUrl)
 
 					self.__jasyCommandsHandling(renderModel, outputFilename)
@@ -418,7 +419,7 @@ class Konstrukteur:
 		Console.outdent()
 
 		if self.__posts:
-			Console.info("Generate feed")
+			Console.info("Generating feed...")
 			Console.indent()
 
 			for language in self.__languages:
