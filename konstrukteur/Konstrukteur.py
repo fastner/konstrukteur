@@ -352,55 +352,63 @@ class Konstrukteur:
 	def __outputContent(self):
 		""" Output processed content to html files """
 
-		Console.info("Generate content files...")
+		Console.info("Generating public files...")
 		Console.indent()
 
+		# Post process dates as iso string
+		# TODO: Move to parser engine
 		if self.__posts:
 			for post in self.__posts:
-				post["publish"] = post["status"] == "published"
 				post["date"] = post["date"].isoformat()
 
-		for type in ["post", "postIndex", "page"]:
-			# Posts must be generated before postIndex
-			if type == "postIndex":
-				urlGenerator = self.config["blog"]["indexurl"]
+
+		for contentType in ["post", "archive", "page"]:
+			# Posts must be generated before archive
+			if contentType == "archive":
+				urlGenerator = self.config["blog"]["archiveUrl"]
 				files = self.__generatePostIndex()
-			elif type == "page":
+			elif contentType == "page":
 				urlGenerator = self.__pageUrl
 				files = self.__pages
-			else:
+			elif contentType == "post":
 				urlGenerator = self.__postUrl
 				files = self.__posts
 
 			length = len(files)
 			for position, currentPage in enumerate(files):
+				Console.info("Generating %s %s/%s: %s...", contentType, position+1, length, currentPage["slug"])
 
-				Console.info("Generating %s %s/%s: %s...", type, position+1, length, currentPage["slug"])
+				renderModel = self.__generateRenderModel(files, currentPage, contentType)
 
-				renderModel = self.__generateRenderModel(files, currentPage, type)
-				processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(urlGenerator, renderModel)
+				if "url" in currentPage:
+					processedFilename = currentPage["url"]
+				else:
+					processedFilename = self.__renderer.render(urlGenerator, renderModel)
+
 				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
 
 				# Use cache for speed-up re-runs
-				if type == "page" or type == "post":
-					cacheId = "%s-%s-%s-%s" % (type, currentPage["slug"], currentPage["date"], self.__profile.getId())
-					resultContent = self.__cache.read(cacheId, currentPage["mtime"])
-				else:
+				# Using for pages and posts only as archive pages depend on changes in any of these
+				if contentType == "archive":
 					cacheId = None
 					resultContent = None
+				else:
+					cacheId = "%s-%s-%s-%s" % (contentType, currentPage["slug"], currentPage["date"], self.__profile.getId())
+					resultContent = self.__cache.read(cacheId, currentPage["mtime"])
 
+				# Check cache validity
 				if resultContent is None:
 					self.__refreshUrls(files, currentPage, urlGenerator)
-					if type == "postIndex":
+					if contentType == "archive":
 						for cp in files:
 							self.__refreshUrls(currentPage["post"], cp, self.__postUrl)
 
 					self.__jasyCommandsHandling(renderModel, outputFilename)
 
-					outputContent = self.__processOutputContent(renderModel, type)
+					outputContent = self.__processOutputContent(renderModel, contentType)
 					resultContent = konstrukteur.HtmlBeautifier.beautify(outputContent)
 
-					# Store result into cache
+					# Store result into cache when caching is enabled (non archive pages only)
 					if cacheId:
 						self.__cache.store(cacheId, resultContent, currentPage["mtime"])
 

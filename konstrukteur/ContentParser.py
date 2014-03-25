@@ -85,6 +85,9 @@ class ContentParser:
 		parsed["mtime"] = os.path.getmtime(filename)
 		parsed["hash"] = File.sha1(filename)[0:8]
 
+		# Create simple boolean flag for publish state check
+		parsed["publish"] = parsed["status"] == "published"
+
 		# Parse date if available
 		if "date" in parsed:
 			parsed["date"] = dateutil.parser.parse(parsed["date"]).replace(tzinfo=dateutil.tz.tzlocal())
