@@ -358,7 +358,7 @@ class Konstrukteur:
 	def __outputContent(self):
 		""" Output processed content to html files """
 
-		Console.info("Generate content files")
+		Console.info("Generate content files...")
 		Console.indent()
 
 		if self.__article:
@@ -383,19 +383,29 @@ class Konstrukteur:
 
 				Console.info("Generating %s/%s: %s...", position+1, length, currentPage["slug"])
 
-				self.__refreshUrls(pages, currentPage, urlGenerator)
-				if type == "articleIndex":
-					for cp in pages:
-						self.__refreshUrls(currentPage["article"], cp, self.__articleUrl)
 				renderModel = self.__generateRenderModel(pages, currentPage, type)
-
 				processedFilename = currentPage["url"] if "url" in currentPage else self.__renderer.render(urlGenerator, renderModel)
 				outputFilename = self.__profile.expandFileName(os.path.join(self.__profile.getDestinationPath(), processedFilename))
 
-				self.__jasyCommandsHandling(renderModel, outputFilename)
+				# Use cache for speed-up re-runs
+				cacheId = "%s-%s-%s-%s" % (type, currentPage["slug"], currentPage["date"], self.__profile.getId())
+				resultContent = self.__cache.read(cacheId, currentPage["mtime"])
+				if resultContent is None:
+					self.__refreshUrls(pages, currentPage, urlGenerator)
+					if type == "articleIndex":
+						for cp in pages:
+							self.__refreshUrls(currentPage["article"], cp, self.__articleUrl)
 
-				outputContent = self.__processOutputContent(renderModel, type)
-				self.__fileManager.writeFile(outputFilename, self.__cleanHtml(outputContent))
+					self.__jasyCommandsHandling(renderModel, outputFilename)
+
+					outputContent = self.__processOutputContent(renderModel, type)
+					resultContent = self.__cleanHtml(outputContent)
+
+					# Store result into cache
+					self.__cache.store(cacheId, resultContent, currentPage["mtime"])
+
+				# Write actual output file
+				self.__fileManager.writeFile(outputFilename, resultContent)
 
 		Console.outdent()
 
