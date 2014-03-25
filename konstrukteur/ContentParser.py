@@ -30,8 +30,7 @@ class ContentParser:
 
 
 	def parse(self, pagesPath, pages, languages):
-		#pagesPath = os.path.join(self.__contentPath, sourcePath)
-		Console.info("Parse content files at %s" % pagesPath)
+		Console.info("Processing %s" % pagesPath)
 		Console.indent()
 
 		for extension in self.__extensions:
