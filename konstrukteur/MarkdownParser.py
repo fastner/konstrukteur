@@ -1,12 +1,11 @@
 #
-# Konstrukteur - Static website generator
-# Copyright 2013 Sebastian Fastner
+# Konstrukteur - Static Site Generator
+# Copyright 2013-2014 Sebastian Fastner
+# Copyright 2014 Sebastian Werner
 #
 
 __all__ = ["parse"]
 
-from jasy.env.State import session
-from jasy.core import Console
 from bs4 import BeautifulSoup
 import misaka
 import re
@@ -19,7 +18,8 @@ def replaceJasyCommand(matchobj):
 	return cmd
 
 def parse(filename):
-	""" HTML parser class for Konstrukteur """
+	""" Markdown Parser class for Konstrukteur """
+
 	page = {}
 
 	rndr = misaka.HtmlRenderer()

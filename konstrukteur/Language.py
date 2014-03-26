@@ -1,6 +1,7 @@
 #
-# Konstrukteur - Static website generator
-# Copyright 2013 Sebastian Fastner
+# Konstrukteur - Static Site Generator
+# Copyright 2013-2014 Sebastian Fastner
+# Copyright 2014 Sebastian Werner
 #
 
 from jasy import datadir
@@ -133,5 +134,5 @@ class LocaleParser():
 	def getName(self, identifier):
 		store = self.__getStore(self.__data, "display")
 		store = self.__getStore(store, "language")
-		
+
 		return store[identifier.upper()]
